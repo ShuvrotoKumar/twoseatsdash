@@ -55,26 +55,26 @@ const items = [
     url: "/earnings",
     icon: Wallet,
   },
-  {
-    title: "Category",
-    url: "/category",
-    icon: ChartBarStacked,
-  },
-  {
-    title: "Products",
-    url: "/products",
-    icon: PackageSearch,
-  },
+  // {
+  //   title: "Category",
+  //   url: "/category",
+  //   icon: ChartBarStacked,
+  // },
+  // {
+  //   title: "Products",
+  //   url: "/products",
+  //   icon: PackageSearch,
+  // },
   {
     title: "Subscription",
     url: "/subscription",
     icon: Podcast,
   },
-  {
-    title: "Blog",
-    url: "/blogs",
-    icon: RssIcon,
-  },
+  // {
+  //   title: "Blog",
+  //   url: "/blogs",
+  //   icon: RssIcon,
+  // },
   {
     title: "Reports",
     url: "/reports",
