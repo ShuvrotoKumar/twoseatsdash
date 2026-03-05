@@ -53,7 +53,7 @@ const Navbar = () => {
           {/* Right Section */}
           <div className="mr-2 flex shrink-0 items-center gap-1.5 pr-0 md:gap-3 md:pr-2">
             {/* Theme Toggle */}
-            <DropdownMenu modal={false}>
+            {/* <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <button className="relative flex h-[40px] w-[40px] flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-900 bg-transparent hover:bg-white/10 md:h-[52px] md:w-[52px] dark:border-white">
                   <Sun
@@ -72,7 +72,7 @@ const Navbar = () => {
                 <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
 
             {/* Messages */}
             <Link href="/chats" className="flex-shrink-0">
