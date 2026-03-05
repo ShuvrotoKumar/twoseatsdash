@@ -42,7 +42,7 @@ const Navbar = () => {
             </button>
             <div className="flex min-w-0 flex-col">
               <h1 className="truncate text-base leading-tight font-bold text-gray-900 md:text-xl dark:text-white">
-                Welcome, DS
+                Welcome
               </h1>
               <p className="-mt-1 hidden text-xs font-semibold text-gray-900 sm:block md:text-sm dark:text-white">
                 Have a nice day!

@@ -39,7 +39,7 @@ function sampleDataForYear(year: number) {
 const chartConfig = {
   desktop: {
     label: "Users",
-    color: "var(--chart-1)",
+    color: "#ff0a17",
   },
 } satisfies ChartConfig;
 

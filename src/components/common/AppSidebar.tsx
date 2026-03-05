@@ -135,8 +135,8 @@ const AppSidebar = () => {
                       href={item.url}
                       className={`flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 md:gap-4 ${
                         isActive(item.url)
-                          ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                          : ""
+                          ? "bg-sidebar-primary! text-sidebar-primary-foreground"
+                          : "hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
                       }`}
                     >
                       <item.icon className="h-6 w-6 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 md:h-7 md:w-7" />
