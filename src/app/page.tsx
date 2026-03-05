@@ -28,7 +28,7 @@ const Dashbaord = () => {
             Total Distributor
           </span>
         </div>
-        <div className="mx-3 h-12 w-px bg-[#F4B057] sm:mx-4 sm:h-14 md:mx-6 md:h-16 lg:mx-8" />
+        <div className="mx-3 h-12 w-px bg-[#ff0a17] sm:mx-4 sm:h-14 md:mx-6 md:h-16 lg:mx-8" />
         <div className="flex flex-1 flex-col items-center justify-center px-2">
           <p className="mb-1 text-xl font-bold text-[#0D2357] sm:mb-2 sm:text-2xl md:text-3xl lg:text-4xl dark:text-white">
             <CountingNumber
