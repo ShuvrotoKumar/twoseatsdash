@@ -111,6 +111,13 @@ const AppSidebar = () => {
               width={128}
               height={128}
               className="h-full w-full object-contain group-data-[collapsible=icon]:h-14 group-data-[collapsible=icon]:w-14"
+              unoptimized
+              onError={(e) => {
+                console.error('Logo failed to load:', e);
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.src = '/next.svg';
+              }}
             />
           </div>
           
