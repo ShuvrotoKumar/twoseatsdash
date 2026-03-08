@@ -1,20 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, Bell, User, Moon, Sun, Menu } from "lucide-react";
+import { MessageSquare, Bell, User, Menu } from "lucide-react";
 import { useSidebar } from "../ui/sidebar";
-import { useTheme } from "next-themes";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import NotificationMenu from "./NotificationMenu";
 
 const Navbar = () => {
-  const { setTheme } = useTheme();
   const { toggleSidebar, state } = useSidebar();
   const sidebarOpen = state === "expanded";
   const [showNotifications, setShowNotifications] = useState(false);
@@ -52,27 +44,6 @@ const Navbar = () => {
 
           {/* Right Section */}
           <div className="mr-2 flex shrink-0 items-center gap-1.5 pr-0 md:gap-3 md:pr-2">
-            {/* Theme Toggle */}
-            {/* <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <button className="relative flex h-[40px] w-[40px] flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-900 bg-transparent hover:bg-white/10 md:h-[52px] md:w-[52px] dark:border-white">
-                  <Sun
-                    className="h-5 w-5 scale-100 rotate-0 text-gray-900 transition-all md:h-6 md:w-6 dark:scale-0 dark:-rotate-90 dark:text-white"
-                    strokeWidth={2}
-                  />
-                  <Moon
-                    className="absolute h-5 w-5 scale-0 rotate-90 text-gray-900 transition-all md:h-6 md:w-6 dark:scale-100 dark:rotate-0 dark:text-white"
-                    strokeWidth={2}
-                  />
-                  <span className="sr-only">Toggle theme</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" side="bottom" sideOffset={8} className="z-[60]">
-                <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu> */}
 
             {/* Messages */}
             <Link href="/chats" className="flex-shrink-0">
