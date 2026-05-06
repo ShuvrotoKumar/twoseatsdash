@@ -2,11 +2,11 @@ import { baseApi } from "./baseApi";
 
 const profileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getUserProfile: builder.query({
+    updateAdminPersonalInfo: builder.mutation({
       query: (params) => ({
-        url: "user/user-detail",
-        method: "GET",
-        params,
+        url: "/admin/update-admin-personal-info",
+        method: "PUT",
+        body: params,
       }),
       providesTags: ["profile"],
     }),
@@ -37,7 +37,7 @@ const profileApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useUpdateProfileMutation,
+  useUpdateAdminPersonalInfoMutation,
   useChangeAdminPasswordMutation,
   useGetUserProfileQuery,
   useGetUserDetailsQuery,

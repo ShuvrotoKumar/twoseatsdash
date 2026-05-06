@@ -7,29 +7,46 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { useDispatch, useSelector } from "react-redux";
+import { useUpdateAdminPersonalInfoMutation } from "../../../redux/api/profileApi";
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { setUser } from "../../../redux/Slice/authSlice";
+import { getImageUrl } from "../../../config/envConfig";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [name, setName] = useState("Super Admin");
-  const [email, setEmail] = useState("admin@example.com");
-  const [phone, setPhone] = useState("+1 234 567 8900");
-  const [avatar, setAvatar] = useState(
-    "https://api.dicebear.com/7.x/avataaars/svg?seed=SuperAdmin",
-  );
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: any) => state.auth);
+  const [updateProfile, { isLoading }] = useUpdateAdminPersonalInfoMutation();
+
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [avatar, setAvatar] = useState(getImageUrl(user?.image || ""));
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
     phone?: string;
   }>({});
 
+  useEffect(() => {
+    if (user && !selectedFile) {
+      setName(user.name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+      setAvatar(user.image ? getImageUrl(user.image) : "");
+    }
+  }, [user, selectedFile]);
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatar(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setSelectedFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setAvatar(previewUrl);
     }
   };
 
@@ -54,8 +71,26 @@ export default function ProfilePage() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      // Handle profile update
-      toast.success("Profile updated successfully!");
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("phone", phone);
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      }
+
+      updateProfile(formData)
+        .unwrap()
+        .then((res) => {
+          toast.success("Profile updated successfully!");
+          setSelectedFile(null); // Clear selected file after success
+          // Update the user in Redux store if the API returns the updated user
+          if (res?.data) {
+            dispatch(setUser({ user: res.data, token: localStorage.getItem("token") }));
+          }
+        })
+        .catch((err) => {
+          toast.error(err?.data?.message || "Failed to update profile");
+        });
     }
   };
 
@@ -163,9 +198,10 @@ export default function ProfilePage() {
           {/* Submit Button */}
           <Button
             type="submit"
+            disabled={isLoading}
             className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 w-full text-base"
           >
-            Save Changes
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Save Changes"}
           </Button>
         </form>
       </div>
