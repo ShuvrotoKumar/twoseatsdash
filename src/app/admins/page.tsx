@@ -2,12 +2,12 @@
 
 import React from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Eye, Ban, ChevronLeft, ChevronRight, Edit, Loader2 } from "lucide-react";
+import { Search, Eye, Trash2, ChevronLeft, ChevronRight, Edit, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BlockedUsersModal from "../users/BlockedUsersModal";
 import UserDetailsModal from "../users/UserDetailsModal";
-import BlockUserModal from "./BlockUserModal";
+import DeleteAdminModal from "./DeleteAdminModal";
 import CreateAdminModal from "./CreateAdminModal";
 import EditAdminModal from "./EditAdminModal";
 import { useGetAllAdminsQuery, useUpdateAdminMutation, useDeleteUserMutation } from "../../../redux/api/adminApi";
@@ -127,13 +127,13 @@ const seedAdmins = [
 function AdminsTable({
   admins,
   onViewAdmin,
-  onBlockAdmin,
+  onDeleteAdmin,
   onEditAdmin,
   startIndex,
 }: {
   admins: any[];
   onViewAdmin: (admin: any) => void;
-  onBlockAdmin: (admin: any) => void;
+  onDeleteAdmin: (admin: any) => void;
   onEditAdmin: (admin: any) => void;
   startIndex: number;
 }) {
@@ -222,10 +222,10 @@ function AdminsTable({
                         variant="ghost"
                         size="icon"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
-                        onClick={() => onBlockAdmin(a)}
-                        title="Block Admin"
+                        onClick={() => onDeleteAdmin(a)}
+                        title="Delete Admin"
                       >
-                        <Ban className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -284,10 +284,10 @@ function AdminsTable({
                   variant="ghost"
                   size="icon"
                   className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
-                  onClick={() => onBlockAdmin(a)}
-                  title="Block Admin"
+                  onClick={() => onDeleteAdmin(a)}
+                  title="Delete Admin"
                 >
-                  <Ban className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -334,9 +334,8 @@ type Admin = (typeof seedAdmins)[0];
 export default function AdminsPage() {
   const [query, setQuery] = React.useState("");
   const [selectedAdmin, setSelectedAdmin] = React.useState<any | null>(null);
-  const [blockAdmin, setBlockAdmin] = React.useState<any | null>(null);
+  const [deleteAdmin, setDeleteAdmin] = React.useState<any | null>(null);
   const [editingAdmin, setEditingAdmin] = React.useState<any | null>(null);
-  const [showBlockedAdmins, setShowBlockedAdmins] = React.useState(false);
   const [showCreateAdmin, setShowCreateAdmin] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 10;
@@ -349,7 +348,7 @@ export default function AdminsPage() {
   });
 
   const [updateAdmin] = useUpdateAdminMutation();
-  const [deleteAdmin] = useDeleteUserMutation();
+  const [deleteAdminMutation, { isLoading: isDeleting }] = useDeleteUserMutation();
 
   const admins = apiResponse?.data || [];
   const meta = apiResponse?.meta || { totalUsers: 0, currentPage: 1, limit: 10 };
@@ -362,35 +361,15 @@ export default function AdminsPage() {
     setCurrentPage(1);
   }, [query]);
 
-  const [blockedAdmins, setBlockedAdmins] = React.useState<any[]>([]);
 
-  async function handleBlockConfirm() {
-    if (blockAdmin) {
+  async function handleDeleteConfirm() {
+    if (deleteAdmin) {
       try {
-        await updateAdmin(blockAdmin._id).unwrap();
-        setBlockedAdmins((prev) => [...prev, blockAdmin]);
-        setBlockAdmin(null);
+        await deleteAdminMutation(deleteAdmin._id).unwrap();
+        setDeleteAdmin(null);
       } catch (err) {
-        console.error("Failed to block admin:", err);
+        console.error("Failed to delete admin:", err);
       }
-    }
-  }
-
-  async function handleUnblock(id: string) {
-    try {
-      await updateAdmin(id).unwrap();
-      setBlockedAdmins((prev) => prev.filter((a) => a._id !== id));
-    } catch (err) {
-      console.error("Failed to unblock admin:", err);
-    }
-  }
-
-  async function handleDelete(id: string) {
-    try {
-      await deleteAdmin(id).unwrap();
-      setBlockedAdmins((prev) => prev.filter((a) => a._id !== id));
-    } catch (err) {
-      console.error("Failed to delete admin:", err);
     }
   }
 
@@ -435,13 +414,6 @@ export default function AdminsPage() {
             >
               Create Admin
             </Button>
-            <Button
-              variant="secondary"
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 whitespace-nowrap"
-              onClick={() => setShowBlockedAdmins(true)}
-            >
-              Blocked ({blockedAdmins.length})
-            </Button>
           </div>
         </div>
       </div>
@@ -456,7 +428,7 @@ export default function AdminsPage() {
         <AdminsTable
           admins={admins}
           onViewAdmin={setSelectedAdmin}
-          onBlockAdmin={setBlockAdmin}
+          onDeleteAdmin={setDeleteAdmin}
           onEditAdmin={setEditingAdmin}
           startIndex={startIndex}
         />
@@ -537,35 +509,33 @@ export default function AdminsPage() {
         }
         onBlock={() => {
           if (selectedAdmin) {
-            setBlockAdmin(selectedAdmin);
+            setDeleteAdmin(selectedAdmin);
             setSelectedAdmin(null);
           }
         }}
       />
 
-      {/* Block Admin Modal */}
-      <BlockUserModal
-        open={!!blockAdmin}
-        onClose={() => setBlockAdmin(null)}
-        user={blockAdmin}
-        onConfirm={handleBlockConfirm}
+      {/* Delete Admin Modal */}
+      <DeleteAdminModal
+        open={!!deleteAdmin}
+        onClose={() => setDeleteAdmin(null)}
+        admin={
+          deleteAdmin
+            ? {
+                id: deleteAdmin._id,
+                name: deleteAdmin.name,
+                email: deleteAdmin.email,
+                avatar: deleteAdmin.image?.startsWith("http")
+                  ? deleteAdmin.image
+                  : `${imageUrl}${deleteAdmin.image}`,
+              }
+            : null
+        }
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
       />
 
-      {/* Blocked Admins Modal */}
-      <BlockedUsersModal
-        open={showBlockedAdmins}
-        onClose={() => setShowBlockedAdmins(false)}
-        blockedUsers={blockedAdmins.map((a) => ({
-          id: a._id,
-          name: a.name,
-          email: a.email,
-          phone: a.phone || "N/A",
-          joinedAt: a.createdAt ? new Date(a.createdAt).toLocaleDateString() : "N/A",
-          avatar: a.image?.startsWith("http") ? a.image : `${imageUrl}${a.image}`,
-        }))}
-        onUnblock={handleUnblock}
-        onDelete={handleDelete}
-      />
+
 
       {/* Create Admin Modal */}
       <CreateAdminModal
