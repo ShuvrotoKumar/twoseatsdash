@@ -5,16 +5,33 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import TiptapEditor from "@/components/ui/TiptapEditor";
+import { useGetAboutUsQuery, useUpdateAboutUsMutation } from "../../../../redux/api/aboutusApi";
+import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export default function AboutUsPage() {
   const router = useRouter();
-  const [content, setContent] = useState(
-    "<p>We are a dedicated team committed to providing the best service to our customers. Learn more about our mission and values.</p>",
-  );
+  const { data: apiResponse, isLoading: isFetching } = useGetAboutUsQuery({});
+  const [updateAboutUs, { isLoading: isUpdating }] = useUpdateAboutUsMutation();
+  const [content, setContent] = useState("");
 
-  const handleSave = () => {
-    // Handle save logic
-    alert("About Us saved!");
+  useEffect(() => {
+    if (apiResponse?.data?.description) {
+      setContent(apiResponse.data.description);
+    }
+  }, [apiResponse]);
+
+  const handleSave = async () => {
+    try {
+      await updateAboutUs({
+        requestData: {
+          description: content,
+        },
+      }).unwrap();
+      alert("About Us saved!");
+    } catch (err) {
+      console.error("Failed to save about us:", err);
+    }
   };
 
   return (
@@ -30,7 +47,12 @@ export default function AboutUsPage() {
       </div>
 
       {/* Editor */}
-      <div className="bg-card p-6">
+      <div className="bg-card relative p-6">
+        {isFetching && (
+          <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[1px]">
+            <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          </div>
+        )}
         <TiptapEditor content={content} onChange={setContent} placeholder="Write about us..." />
       </div>
 
@@ -38,9 +60,17 @@ export default function AboutUsPage() {
       <div className="bg-sidebar flex flex-col items-center justify-center p-4 sm:flex-row">
         <Button
           onClick={handleSave}
+          disabled={isUpdating || isFetching}
           className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
         >
-          Save changes
+          {isUpdating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save changes"
+          )}
         </Button>
       </div>
     </div>

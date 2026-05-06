@@ -5,16 +5,33 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import TiptapEditor from "@/components/ui/TiptapEditor";
+import { useGetTermsAndConditionsQuery, useUpdateTermsAndConditionsMutation } from "../../../../redux/api/termsApi";
+import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export default function TermsConditionsPage() {
   const router = useRouter();
-  const [content, setContent] = useState(
-    "<p>There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in the middle of text.</p>",
-  );
+  const { data: apiResponse, isLoading: isFetching } = useGetTermsAndConditionsQuery({});
+  const [updateTerms, { isLoading: isUpdating }] = useUpdateTermsAndConditionsMutation();
+  const [content, setContent] = useState("");
 
-  const handleSave = () => {
-    // Handle save logic
-    alert("Terms & Conditions saved!");
+  useEffect(() => {
+    if (apiResponse?.data?.description) {
+      setContent(apiResponse.data.description);
+    }
+  }, [apiResponse]);
+
+  const handleSave = async () => {
+    try {
+      await updateTerms({
+        requestData: {
+          description: content,
+        },
+      }).unwrap();
+      alert("Terms & Conditions saved!");
+    } catch (err) {
+      console.error("Failed to save terms and conditions:", err);
+    }
   };
 
   return (
@@ -30,7 +47,12 @@ export default function TermsConditionsPage() {
       </div>
 
       {/* Editor */}
-      <div className="bg-card p-6">
+      <div className="bg-card relative p-6">
+        {isFetching && (
+          <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[1px]">
+            <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          </div>
+        )}
         <TiptapEditor
           content={content}
           onChange={setContent}
@@ -42,9 +64,17 @@ export default function TermsConditionsPage() {
       <div className="bg-sidebar flex flex-col items-center justify-center gap-3 p-4 sm:flex-row">
         <Button
           onClick={handleSave}
+          disabled={isUpdating || isFetching}
           className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
         >
-          Save changes
+          {isUpdating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save changes"
+          )}
         </Button>
       </div>
     </div>

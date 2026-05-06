@@ -23,9 +23,6 @@ type FAQ = {
 export default function FAQPage() {
   const router = useRouter();
   const { data: apiResponse, isLoading } = useGetAllFaqQuery({});
-  const [createFaq] = useCreateFaqMutation();
-  const [updateFaq] = useUpdateFaqMutation();
-  const [deleteFaq] = useDeleteFaqMutation();
 
   const faqs = apiResponse?.data?.faqs || [];
 
@@ -36,33 +33,7 @@ export default function FAQPage() {
 
 
 
-  const handleEditFAQ = async (updatedFaq: { id: string; question: string; answer: string }) => {
-    try {
-      await updateFaq({
-        _id: updatedFaq.id,
-        data: {
-          question: updatedFaq.question,
-          answer: updatedFaq.answer,
-        },
-      }).unwrap();
-      setEditModalOpen(false);
-      setSelectedFaq(null);
-    } catch (err) {
-      console.error("Failed to update FAQ:", err);
-    }
-  };
 
-  const handleDeleteFAQ = async () => {
-    if (selectedFaq) {
-      try {
-        await deleteFaq({ _id: selectedFaq._id }).unwrap();
-        setDeleteModalOpen(false);
-        setSelectedFaq(null);
-      } catch (err) {
-        console.error("Failed to delete FAQ:", err);
-      }
-    }
-  };
 
   const openEditModal = (faq: FAQ) => {
     setSelectedFaq(faq);
@@ -161,7 +132,6 @@ export default function FAQPage() {
           setEditModalOpen(false);
           setSelectedFaq(null);
         }}
-        onConfirm={handleEditFAQ}
         faq={
           selectedFaq
             ? {
@@ -178,8 +148,7 @@ export default function FAQPage() {
           setDeleteModalOpen(false);
           setSelectedFaq(null);
         }}
-        onConfirm={handleDeleteFAQ}
-        faqQuestion={selectedFaq?.question || ""}
+        faq={selectedFaq}
       />
     </div>
   );

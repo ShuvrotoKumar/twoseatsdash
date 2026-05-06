@@ -12,9 +12,8 @@ const faqApi = baseApi.injectEndpoints({
     }),
     deleteFaq: builder.mutation({
       query: ({ _id }) => ({
-        url: `faq/delete-faq`,
+        url: `/faq/delete-faq/${_id}`,
         method: "DELETE",
-        params: { faqId: _id },
       }),
       invalidatesTags: ["faq"],
     }),
@@ -27,12 +26,10 @@ const faqApi = baseApi.injectEndpoints({
       invalidatesTags: ["faq"],
     }),
     updateFaq: builder.mutation({
-      query: ({ _id, data }) => {
-        // console.log("Updating FAQ:", { _id, data });
+      query: ({ _id, ...data }) => {
         return {
-          url: `faq/update-faq`,
+          url: `/faq/update-faq/${_id}`,
           method: "PATCH",
-          params: { faqId: _id },
           body: data,
         };
       },

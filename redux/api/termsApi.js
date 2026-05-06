@@ -4,14 +4,14 @@ const termsAndConditionsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTermsAndConditions: builder.query({
       query: () => ({
-        url: "home/get-terms-condition",
+        url: "/legalDoc/get-doc/termsAndCondition",
         method: "GET",
       }),
       providesTags: ["termsAndConditions"],
     }),
     updateTermsAndConditions: builder.mutation({
       query: ({ requestData }) => ({
-        url: "home/update-terms-condition",
+        url: "/legalDoc/create-doc/termsAndCondition",
         method: "PATCH",
         body: requestData,
       }),

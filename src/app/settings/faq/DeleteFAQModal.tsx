@@ -2,24 +2,31 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { useDeleteFaqMutation } from "../../../../redux/api/faqApi";
 
 type DeleteFAQModalProps = {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
-  faqQuestion: string;
+  faq: { _id: string; question: string } | null;
 };
 
 export default function DeleteFAQModal({
   open,
   onClose,
-  onConfirm,
-  faqQuestion,
+  faq,
 }: DeleteFAQModalProps) {
-  const handleConfirm = () => {
-    onConfirm();
-    onClose();
+  const [deleteFaq, { isLoading }] = useDeleteFaqMutation();
+
+  if (!faq) return null;
+
+  const handleConfirm = async () => {
+    try {
+      await deleteFaq({ _id: faq._id }).unwrap();
+      onClose();
+    } catch (err) {
+      console.error("Failed to delete FAQ:", err);
+    }
   };
 
   return (
@@ -36,7 +43,7 @@ export default function DeleteFAQModal({
           <p className="text-muted-foreground text-center text-sm">
             Are you sure you want to delete this FAQ?
           </p>
-          <p className="text-foreground mt-3 text-center font-medium">"{faqQuestion}"</p>
+          <p className="text-foreground mt-3 text-center font-medium">"{faq.question}"</p>
           <p className="text-muted-foreground mt-3 text-center text-xs">
             This action cannot be undone.
           </p>
@@ -49,9 +56,17 @@ export default function DeleteFAQModal({
           <Button
             type="button"
             onClick={handleConfirm}
+            disabled={isLoading}
             className="bg-destructive hover:bg-destructive/90 text-destructive-foreground flex-1"
           >
-            Delete
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
           </Button>
         </div>
       </DialogContent>

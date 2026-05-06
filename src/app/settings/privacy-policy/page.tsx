@@ -5,16 +5,33 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import TiptapEditor from "@/components/ui/TiptapEditor";
+import { useGetPrivacyQuery, useUpdatePrivacyMutation } from "../../../../redux/api/privacyApi";
+import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export default function PrivacyPolicyPage() {
   const router = useRouter();
-  const [content, setContent] = useState(
-    "<p>Your privacy is important to us. This privacy policy explains how we collect, use, and protect your personal information.</p>",
-  );
+  const { data: apiResponse, isLoading: isFetching } = useGetPrivacyQuery({});
+  const [updatePrivacy, { isLoading: isUpdating }] = useUpdatePrivacyMutation();
+  const [content, setContent] = useState("");
 
-  const handleSave = () => {
-    // Handle save logic
-    alert("Privacy Policy saved!");
+  useEffect(() => {
+    if (apiResponse?.data?.description) {
+      setContent(apiResponse.data.description);
+    }
+  }, [apiResponse]);
+
+  const handleSave = async () => {
+    try {
+      await updatePrivacy({
+        requestData: {
+          description: content,
+        },
+      }).unwrap();
+      alert("Privacy Policy saved!");
+    } catch (err) {
+      console.error("Failed to save privacy policy:", err);
+    }
   };
 
   return (
@@ -30,7 +47,12 @@ export default function PrivacyPolicyPage() {
       </div>
 
       {/* Editor */}
-      <div className="bg-card p-6">
+      <div className="bg-card relative p-6">
+        {isFetching && (
+          <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[1px]">
+            <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          </div>
+        )}
         <TiptapEditor
           content={content}
           onChange={setContent}
@@ -42,9 +64,17 @@ export default function PrivacyPolicyPage() {
       <div className="bg-sidebar flex flex-col items-center justify-center p-4 sm:flex-row">
         <Button
           onClick={handleSave}
+          disabled={isUpdating || isFetching}
           className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
         >
-          Save changes
+          {isUpdating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save changes"
+          )}
         </Button>
       </div>
     </div>

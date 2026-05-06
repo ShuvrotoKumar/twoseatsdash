@@ -5,21 +5,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TiptapEditor from "@/components/ui/TiptapEditor";
+import { useUpdateFaqMutation } from "../../../../redux/api/faqApi";
+import { Loader2 } from "lucide-react";
 
 type EditFAQModalProps = {
   open: boolean;
   onClose: () => void;
-  onConfirm: (faq: { id: string; question: string; answer: string }) => void;
   faq: { id: string; question: string; answer: string } | null;
 };
 
-export default function EditFAQModal({ open, onClose, onConfirm, faq }: EditFAQModalProps) {
+export default function EditFAQModal({ open, onClose, faq }: EditFAQModalProps) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [errors, setErrors] = useState<{
     question?: string;
     answer?: string;
   }>({});
+
+  const [updateFaq, { isLoading }] = useUpdateFaqMutation();
 
   useEffect(() => {
     if (faq) {
@@ -43,16 +46,20 @@ export default function EditFAQModal({ open, onClose, onConfirm, faq }: EditFAQM
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validateForm() && faq) {
-      onConfirm({
-        id: faq.id,
-        question,
-        answer,
-      });
-      handleClose();
+      try {
+        await updateFaq({
+          _id: faq.id,
+          question,
+          answer,
+        }).unwrap();
+        handleClose();
+      } catch (err) {
+        console.error("Failed to update FAQ:", err);
+      }
     }
   };
 
@@ -111,9 +118,17 @@ export default function EditFAQModal({ open, onClose, onConfirm, faq }: EditFAQM
             </Button>
             <Button
               type="submit"
+              disabled={isLoading}
               className="bg-primary hover:bg-primary/90 text-primary-foreground flex-1"
             >
-              Update FAQ
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update FAQ"
+              )}
             </Button>
           </div>
         </form>
