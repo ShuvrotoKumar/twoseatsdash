@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/common/theme-provider";
 import NotificationProvider from "@/context/notification-context";
 import DashboardLayout from "@/app/DashboardLayout";
+import ReduxProvider from "../../redux/ReduxProvider";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -35,9 +36,11 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <NotificationProvider>
-            <DashboardLayout>{children}</DashboardLayout>
-          </NotificationProvider>
+          <ReduxProvider>
+            <NotificationProvider>
+              <DashboardLayout>{children}</DashboardLayout>
+            </NotificationProvider>
+          </ReduxProvider>
         </ThemeProvider>
       </body>
     </html>

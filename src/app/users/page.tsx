@@ -2,12 +2,14 @@
 
 import React from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Eye, Ban, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Eye, Ban, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BlockedUsersModal from "./BlockedUsersModal";
 import UserDetailsModal from "./UserDetailsModal";
 import BlockUserModal from "../admins/BlockUserModal";
+import { useGetAllUserQuery, useUpdateUserMutation, useDeleteUserMutation } from "../../../redux/api/userApi";
+import { imageUrl } from "../../../config/envConfig";
 
 
 const seedUsers = [
@@ -75,9 +77,9 @@ function UsersTable({
   onBlockUser,
   startIndex,
 }: {
-  users: typeof seedUsers;
-  onViewUser: (user: User) => void;
-  onBlockUser: (user: User) => void;
+  users: any[];
+  onViewUser: (user: any) => void;
+  onBlockUser: (user: any) => void;
   startIndex: number;
 }) {
   return (
@@ -117,22 +119,27 @@ function UsersTable({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={u.avatar} alt={u.name} />
+                        <AvatarImage
+                          src={u.image?.startsWith("http") ? u.image : `${imageUrl}${u.image}`}
+                          alt={u.name}
+                        />
                         <AvatarFallback>
                           {u.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
+                            ? u.name
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                .join("")
+                            : "U"}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-foreground text-sm font-medium">{u.name}</span>
+                      <span className="text-foreground text-sm font-medium">{u.userName || "N/A"}</span>
                     </div>
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
-                    {u.phone}
+                    {u.phone || "N/A"}
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
-                    {u.joinedAt}
+                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"}
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                     {u.email}
@@ -173,16 +180,21 @@ function UsersTable({
             <div className="flex items-start justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <Avatar className="h-12 w-12 flex-shrink-0">
-                  <AvatarImage src={u.avatar} alt={u.name} />
+                  <AvatarImage
+                    src={u.image?.startsWith("http") ? u.image : `${imageUrl}${u.image}`}
+                    alt={u.name}
+                  />
                   <AvatarFallback>
                     {u.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+                      ? u.name
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .join("")
+                      : "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-foreground truncate font-semibold">{u.name}</h3>
+                  <h3 className="text-foreground truncate font-semibold">{u.userName || "N/A"}</h3>
                   <p className="text-muted-foreground text-xs">#{startIndex + idx + 1}</p>
                 </div>
               </div>
@@ -214,11 +226,13 @@ function UsersTable({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Phone:</span>
-                <span className="text-foreground">{u.phone}</span>
+                <span className="text-foreground">{u.phone || "N/A"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Joined:</span>
-                <span className="text-foreground">{u.joinedAt}</span>
+                <span className="text-foreground">
+                  {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"}
+                </span>
               </div>
             </div>
           </div>
@@ -231,50 +245,72 @@ function UsersTable({
 type User = (typeof seedUsers)[0];
 
 export default function UsersPage() {
-  const [users, setUsers] = React.useState(seedUsers);
-  const [blockedUsers, setBlockedUsers] = React.useState<User[]>([]);
   const [query, setQuery] = React.useState("");
   const [activeTab, setActiveTab] = React.useState<"clients" | "providers">("providers");
-  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
-  const [blockUser, setBlockUser] = React.useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = React.useState<any | null>(null);
+  const [blockUser, setBlockUser] = React.useState<any | null>(null);
   const [showBlockedUsers, setShowBlockedUsers] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 10;
 
-  const filtered = users.filter(
-    (u) =>
-      u.name.toLowerCase().includes(query.toLowerCase()) ||
-      u.email.toLowerCase().includes(query.toLowerCase()),
-  );
+  // API query
+  const { data: apiResponse, isLoading } = useGetAllUserQuery({
+    role: activeTab === "clients" ? "consumer" : "serviceProvider",
+    searchTerm: query,
+    page: currentPage,
+    limit: itemsPerPage,
+  });
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
+
+  const users = apiResponse?.data || [];
+  const meta = apiResponse?.meta || { totalUsers: 0, currentPage: 1, limit: 10 };
+
+  // For now, we'll keep a local state for blocked users to demonstrate the modal
+  // In a real scenario, this would also be an API call
+  const [blockedUsers, setBlockedUsers] = React.useState<any[]>([]);
+
+  const totalPages = Math.ceil(meta.totalUsers / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedUsers = filtered.slice(startIndex, endIndex);
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [query]);
+  }, [query, activeTab]);
 
-  function handleBlockConfirm() {
+  async function handleBlockConfirm() {
     if (blockUser) {
-      setBlockedUsers((prev) => [...prev, blockUser]);
-      setUsers((prev) => prev.filter((u) => u.id !== blockUser.id));
-      setBlockUser(null);
+      try {
+        await updateUser(blockUser._id).unwrap();
+        // Add to local blocked list for UI demonstration
+        setBlockedUsers((prev) => [...prev, blockUser]);
+        setBlockUser(null);
+      } catch (err) {
+        console.error("Failed to block user:", err);
+      }
     }
   }
 
-  function handleUnblock(id: string) {
-    const user = blockedUsers.find((u) => u.id === id);
-    if (user) {
-      setUsers((prev) => [...prev, user]);
-      setBlockedUsers((prev) => prev.filter((u) => u.id !== id));
+  async function handleUnblock(id: string) {
+    try {
+      await updateUser(id).unwrap(); // Assuming toggle or similar
+      setBlockedUsers((prev) => prev.filter((u) => u._id !== id));
+    } catch (err) {
+      console.error("Failed to unblock user:", err);
     }
   }
 
-  function handleDelete(id: string) {
-    setBlockedUsers((prev) => prev.filter((u) => u.id !== id));
+  async function handleDelete(id: string) {
+    try {
+      await deleteUser(id).unwrap();
+      setBlockedUsers((prev) => prev.filter((u) => u._id !== id));
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+    }
   }
+
+
 
   return (
     <div className="bg-background min-h-screen">
@@ -326,13 +362,23 @@ export default function UsersPage() {
       </div>
 
       {/* Table area */}
-      <div>
+      <div className="relative">
+        {isLoading && (
+          <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[1px]">
+            <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          </div>
+        )}
         <UsersTable
-          users={paginatedUsers}
+          users={users}
           onViewUser={setSelectedUser}
           onBlockUser={setBlockUser}
           startIndex={startIndex}
         />
+        {!isLoading && users.length === 0 && (
+          <div className="text-muted-foreground border-border flex h-60 items-center justify-center border-x border-b bg-card">
+            No users found
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
@@ -340,8 +386,8 @@ export default function UsersPage() {
         <div className="bg-card border-border rounded-b-lg border-t p-4">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="text-muted-foreground text-sm">
-              Showing {startIndex + 1} to {Math.min(endIndex, filtered.length)} of {filtered.length}{" "}
-              users
+              Showing {startIndex + 1} to {Math.min(startIndex + users.length, meta.totalUsers)} of{" "}
+              {meta.totalUsers} users
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -386,7 +432,23 @@ export default function UsersPage() {
       <UserDetailsModal
         open={!!selectedUser}
         onClose={() => setSelectedUser(null)}
-        user={selectedUser}
+        user={
+          selectedUser
+            ? {
+                id: selectedUser._id,
+                name: selectedUser.userName || "N/A",
+                email: selectedUser.email,
+                phone: selectedUser.phone || "N/A",
+                joinedAt: selectedUser.createdAt
+                  ? new Date(selectedUser.createdAt).toLocaleDateString()
+                  : "N/A",
+                avatar: selectedUser.image?.startsWith("http")
+                  ? selectedUser.image
+                  : `${imageUrl}${selectedUser.image}`,
+                userType: selectedUser.role,
+              }
+            : null
+        }
         onBlock={() => {
           if (selectedUser) {
             setBlockUser(selectedUser);
@@ -407,7 +469,14 @@ export default function UsersPage() {
       <BlockedUsersModal
         open={showBlockedUsers}
         onClose={() => setShowBlockedUsers(false)}
-        blockedUsers={blockedUsers}
+        blockedUsers={blockedUsers.map((u) => ({
+          id: u._id,
+          name: u.userName || "N/A",
+          email: u.email,
+          phone: u.phone || "N/A",
+          joinedAt: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A",
+          avatar: u.image?.startsWith("http") ? u.image : `${imageUrl}${u.image}`,
+        }))}
         onUnblock={handleUnblock}
         onDelete={handleDelete}
       />

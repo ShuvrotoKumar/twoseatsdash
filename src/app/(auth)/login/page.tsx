@@ -4,16 +4,22 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
+import { useLogInMutation } from "../../../../redux/api/authApi";
+import { setUser } from "../../../../redux/Slice/authSlice";
 
 export default function LoginPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const [logIn, { isLoading }] = useLogInMutation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
@@ -38,13 +44,26 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError(null);
 
     if (validateForm()) {
-      // Add your login logic here
-      console.log("Login:", { email, password, rememberMe });
-      // Example: router.push('/');
+      try {
+        const res = await logIn({ email, password }).unwrap();
+        if (res.success) {
+          // Store token and user info
+          dispatch(setUser({ user: res.data.admin, token: res.data.token }));
+          localStorage.setItem("token", res.data.token);
+
+          // Redirect to home/dashboard
+          router.push("/");
+        } else {
+          setServerError(res.message || "Login failed");
+        }
+      } catch (err: any) {
+        setServerError(err?.data?.message || "Something went wrong. Please try again.");
+      }
     }
   };
 
@@ -73,6 +92,13 @@ export default function LoginPage() {
             <h1 className="text-foreground text-3xl font-bold">Welcome Back</h1>
             <p className="text-muted-foreground mt-2 text-sm">Sign in to your account</p>
           </div>
+
+          {/* Server Error Message */}
+          {serverError && (
+            <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-center text-sm font-medium text-destructive">
+              {serverError}
+            </div>
+          )}
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -151,8 +177,16 @@ export default function LoginPage() {
               type="submit"
               className="bg-primary hover:bg-primary/90 text-primary-foreground w-full text-base font-semibold"
               size="lg"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
         </div>
