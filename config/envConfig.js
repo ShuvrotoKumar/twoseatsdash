@@ -5,7 +5,7 @@
 
 export const url = "https://twoseats-backend.onrender.com/api/v1/";
 export const pdfUrl = "https://twoseats-backend.onrender.com";
-export const imageUrl = "https://twoseats-backend.onrender.com/uploads";
+export const imageUrl = "https://twoseats-backend.onrender.com";
 
 export const getBaseUrl = () => {
   return url;

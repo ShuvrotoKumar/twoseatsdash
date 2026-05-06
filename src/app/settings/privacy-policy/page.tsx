@@ -12,13 +12,23 @@ import { toast } from "sonner";
 
 export default function PrivacyPolicyPage() {
   const router = useRouter();
-  const { data: apiResponse, isLoading: isFetching } = useGetPrivacyQuery({});
+  const { data: apiResponse, isLoading: isFetching } = useGetPrivacyQuery(undefined);
   const [updatePrivacy, { isLoading: isUpdating }] = useUpdatePrivacyMutation();
   const [content, setContent] = useState("");
 
   useEffect(() => {
-    if (apiResponse?.data?.description) {
-      setContent(apiResponse.data.description);
+    if (apiResponse) {
+      console.log("Privacy Policy API Response:", apiResponse);
+      // Try to find the description in multiple common structures
+      const desc = 
+        apiResponse?.data?.description || 
+        apiResponse?.description || 
+        (typeof apiResponse?.data === "string" ? apiResponse.data : null) ||
+        (Array.isArray(apiResponse?.data) ? apiResponse.data[0]?.description : null);
+
+      if (desc && typeof desc === "string") {
+        setContent(desc);
+      }
     }
   }, [apiResponse]);
 
@@ -56,6 +66,7 @@ export default function PrivacyPolicyPage() {
           </div>
         )}
         <TiptapEditor
+          key={isFetching ? "loading" : "ready"}
           content={content}
           onChange={setContent}
           placeholder="Write privacy policy..."

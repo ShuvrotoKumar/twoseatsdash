@@ -18,6 +18,7 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 
 type TiptapEditorProps = {
   content: string;
@@ -56,6 +57,13 @@ export default function TiptapEditor({
       },
     },
   });
+
+  // Sync content from prop to editor (only when not focused to avoid cursor jumping)
+  useEffect(() => {
+    if (editor && content !== editor.getHTML() && !editor.isFocused) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
 
   const handleImageUpload = () => {
     const input = document.createElement("input");
