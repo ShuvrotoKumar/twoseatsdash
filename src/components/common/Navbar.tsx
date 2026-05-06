@@ -56,7 +56,7 @@ const Navbar = () => {
             </Link> */}
 
             {/* Notifications */}
-            {/* <div className="relative flex-shrink-0">
+            <div className="relative flex-shrink-0">
               <button
                 onClick={() => setShowNotifications((s) => !s)}
                 className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full border border-gray-900 bg-transparent hover:bg-white/10 md:h-[52px] md:w-[52px] dark:border-white"
@@ -73,7 +73,7 @@ const Navbar = () => {
                 open={showNotifications}
                 onClose={() => setShowNotifications(false)}
               />
-            </div> */}
+            </div>
 
             {/* Profile */}
 
