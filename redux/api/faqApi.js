@@ -20,7 +20,7 @@ const faqApi = baseApi.injectEndpoints({
     }),
     createFaq: builder.mutation({
       query: (data) => ({
-        url: "faq/create-faq",
+        url: "/faq/create-faq",
         method: "POST",
         body: data,
       }),

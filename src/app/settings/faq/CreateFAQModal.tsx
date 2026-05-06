@@ -5,20 +5,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TiptapEditor from "@/components/ui/TiptapEditor";
+import { useCreateFaqMutation } from "../../../../redux/api/faqApi";
+import { Loader2 } from "lucide-react";
 
 type CreateFAQModalProps = {
   open: boolean;
   onClose: () => void;
-  onConfirm: (faq: { question: string; answer: string }) => void;
 };
 
-export default function CreateFAQModal({ open, onClose, onConfirm }: CreateFAQModalProps) {
+export default function CreateFAQModal({ open, onClose }: CreateFAQModalProps) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [errors, setErrors] = useState<{
     question?: string;
     answer?: string;
   }>({});
+
+  const [createFaq, { isLoading }] = useCreateFaqMutation();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -35,15 +38,19 @@ export default function CreateFAQModal({ open, onClose, onConfirm }: CreateFAQMo
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validateForm()) {
-      onConfirm({
-        question,
-        answer,
-      });
-      handleClose();
+      try {
+        await createFaq({
+          question,
+          answer,
+        }).unwrap();
+        handleClose();
+      } catch (err) {
+        console.error("Failed to create FAQ:", err);
+      }
     }
   };
 
@@ -102,9 +109,17 @@ export default function CreateFAQModal({ open, onClose, onConfirm }: CreateFAQMo
             </Button>
             <Button
               type="submit"
+              disabled={isLoading}
               className="bg-primary hover:bg-primary/90 text-primary-foreground flex-1"
             >
-              Create FAQ
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create FAQ"
+              )}
             </Button>
           </div>
         </form>

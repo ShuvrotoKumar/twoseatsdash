@@ -34,14 +34,7 @@ export default function FAQPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedFaq, setSelectedFaq] = useState<FAQ | null>(null);
 
-  const handleCreateFAQ = async (faq: { question: string; answer: string }) => {
-    try {
-      await createFaq(faq).unwrap();
-      setCreateModalOpen(false);
-    } catch (err) {
-      console.error("Failed to create FAQ:", err);
-    }
-  };
+
 
   const handleEditFAQ = async (updatedFaq: { id: string; question: string; answer: string }) => {
     try {
@@ -161,7 +154,6 @@ export default function FAQPage() {
       <CreateFAQModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        onConfirm={handleCreateFAQ}
       />
       <EditFAQModal
         open={editModalOpen}
