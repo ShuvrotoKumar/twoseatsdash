@@ -4,15 +4,15 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Upload } from "lucide-react";
+import { Eye, EyeOff, Upload, Loader2 } from "lucide-react";
+import { useCreateAdminMutation } from "../../../redux/api/adminApi";
 
 type CreateAdminModalProps = {
   open: boolean;
   onClose: () => void;
-  onConfirm: (admin: { name: string; email: string; password: string; avatar?: string }) => void;
 };
 
-export default function CreateAdminModal({ open, onClose, onConfirm }: CreateAdminModalProps) {
+export default function CreateAdminModal({ open, onClose }: CreateAdminModalProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,6 +20,8 @@ export default function CreateAdminModal({ open, onClose, onConfirm }: CreateAdm
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [avatar, setAvatar] = useState<string>("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [createAdmin, { isLoading }] = useCreateAdminMutation();
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
@@ -30,6 +32,7 @@ export default function CreateAdminModal({ open, onClose, onConfirm }: CreateAdm
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result as string);
@@ -67,17 +70,25 @@ export default function CreateAdminModal({ open, onClose, onConfirm }: CreateAdm
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validateForm()) {
-      onConfirm({
-        name,
-        email,
-        password,
-        avatar: avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
-      });
-      handleClose();
+      try {
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("email", email);
+        formData.append("password", password);
+        if (avatarFile) {
+          formData.append("image", avatarFile);
+        }
+
+        await createAdmin(formData).unwrap();
+        handleClose();
+      } catch (err) {
+        console.error("Failed to create admin:", err);
+        // You could add error handling here, e.g. setting a top-level error state
+      }
     }
   };
 
@@ -87,6 +98,7 @@ export default function CreateAdminModal({ open, onClose, onConfirm }: CreateAdm
     setPassword("");
     setConfirmPassword("");
     setAvatar("");
+    setAvatarFile(null);
     setErrors({});
     setShowPassword(false);
     setShowConfirmPassword(false);
@@ -244,9 +256,17 @@ export default function CreateAdminModal({ open, onClose, onConfirm }: CreateAdm
           {/* Submit Button */}
           <Button
             type="submit"
+            disabled={isLoading}
             className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 w-full text-base font-medium"
           >
-            Create Admin
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create Admin"
+            )}
           </Button>
         </form>
       </DialogContent>

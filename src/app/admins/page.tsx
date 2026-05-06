@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Eye, Ban, ChevronLeft, ChevronRight, Edit } from "lucide-react";
+import { Search, Eye, Ban, ChevronLeft, ChevronRight, Edit, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BlockedUsersModal from "../users/BlockedUsersModal";
@@ -10,6 +10,8 @@ import UserDetailsModal from "../users/UserDetailsModal";
 import BlockUserModal from "./BlockUserModal";
 import CreateAdminModal from "./CreateAdminModal";
 import EditAdminModal from "./EditAdminModal";
+import { useGetAllAdminsQuery, useUpdateAdminMutation, useDeleteUserMutation } from "../../../redux/api/adminApi";
+import { imageUrl } from "../../../config/envConfig";
 
 const seedAdmins = [
   {
@@ -129,10 +131,10 @@ function AdminsTable({
   onEditAdmin,
   startIndex,
 }: {
-  admins: typeof seedAdmins;
-  onViewAdmin: (admin: Admin) => void;
-  onBlockAdmin: (admin: Admin) => void;
-  onEditAdmin: (admin: Admin) => void;
+  admins: any[];
+  onViewAdmin: (admin: any) => void;
+  onBlockAdmin: (admin: any) => void;
+  onEditAdmin: (admin: any) => void;
   startIndex: number;
 }) {
   return (
@@ -175,12 +177,17 @@ function AdminsTable({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={a.avatar} alt={a.name} />
+                        <AvatarImage
+                          src={a.image?.startsWith("http") ? a.image : `${imageUrl}${a.image}`}
+                          alt={a.name}
+                        />
                         <AvatarFallback>
                           {a.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
+                            ? a.name
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                .join("")
+                            : "A"}
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-foreground text-sm font-medium">{a.name}</span>
@@ -192,10 +199,10 @@ function AdminsTable({
                     </span>
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
-                    {a.phone}
+                    {a.phone || "N/A"}
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
-                    {a.joinedAt}
+                    {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : "N/A"}
                   </td>
                   <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                     {a.email}
@@ -245,12 +252,17 @@ function AdminsTable({
             <div className="flex items-start justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <Avatar className="h-12 w-12 flex-shrink-0">
-                  <AvatarImage src={a.avatar} alt={a.name} />
+                  <AvatarImage
+                    src={a.image?.startsWith("http") ? a.image : `${imageUrl}${a.image}`}
+                    alt={a.name}
+                  />
                   <AvatarFallback>
                     {a.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+                      ? a.name
+                          .split(" ")
+                          .map((n: string) => n[0])
+                          .join("")
+                      : "A"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
@@ -301,11 +313,13 @@ function AdminsTable({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Phone:</span>
-                <span className="text-foreground">{a.phone}</span>
+                <span className="text-foreground">{a.phone || "N/A"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Joined:</span>
-                <span className="text-foreground">{a.joinedAt}</span>
+                <span className="text-foreground">
+                  {a.createdAt ? new Date(a.createdAt).toLocaleDateString() : "N/A"}
+                </span>
               </div>
             </div>
           </div>
@@ -318,69 +332,69 @@ function AdminsTable({
 type Admin = (typeof seedAdmins)[0];
 
 export default function AdminsPage() {
-  const [admins, setAdmins] = React.useState(seedAdmins);
-  const [blockedAdmins, setBlockedAdmins] = React.useState<Admin[]>([]);
   const [query, setQuery] = React.useState("");
-  const [selectedAdmin, setSelectedAdmin] = React.useState<Admin | null>(null);
-  const [blockAdmin, setBlockAdmin] = React.useState<Admin | null>(null);
-  const [editingAdmin, setEditingAdmin] = React.useState<Admin | null>(null);
+  const [selectedAdmin, setSelectedAdmin] = React.useState<any | null>(null);
+  const [blockAdmin, setBlockAdmin] = React.useState<any | null>(null);
+  const [editingAdmin, setEditingAdmin] = React.useState<any | null>(null);
   const [showBlockedAdmins, setShowBlockedAdmins] = React.useState(false);
   const [showCreateAdmin, setShowCreateAdmin] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 10;
 
-  const filtered = admins.filter(
-    (a) =>
-      a.name.toLowerCase().includes(query.toLowerCase()) ||
-      a.email.toLowerCase().includes(query.toLowerCase()),
-  );
+  // API query
+  const { data: apiResponse, isLoading } = useGetAllAdminsQuery({
+    searchTerm: query,
+    page: currentPage,
+    limit: itemsPerPage,
+  });
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const [updateAdmin] = useUpdateAdminMutation();
+  const [deleteAdmin] = useDeleteUserMutation();
+
+  const admins = apiResponse?.data || [];
+  const meta = apiResponse?.meta || { totalUsers: 0, currentPage: 1, limit: 10 };
+
+  const totalPages = Math.ceil((meta.totalUsers || admins.length) / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedAdmins = filtered.slice(startIndex, endIndex);
 
   React.useEffect(() => {
     setCurrentPage(1);
   }, [query]);
 
-  function handleBlockConfirm() {
+  const [blockedAdmins, setBlockedAdmins] = React.useState<any[]>([]);
+
+  async function handleBlockConfirm() {
     if (blockAdmin) {
-      setBlockedAdmins((prev) => [...prev, blockAdmin]);
-      setAdmins((prev) => prev.filter((a) => a.id !== blockAdmin.id));
-      setBlockAdmin(null);
+      try {
+        await updateAdmin(blockAdmin._id).unwrap();
+        setBlockedAdmins((prev) => [...prev, blockAdmin]);
+        setBlockAdmin(null);
+      } catch (err) {
+        console.error("Failed to block admin:", err);
+      }
     }
   }
 
-  function handleUnblock(id: string) {
-    const admin = blockedAdmins.find((a) => a.id === id);
-    if (admin) {
-      setAdmins((prev) => [...prev, admin]);
-      setBlockedAdmins((prev) => prev.filter((a) => a.id !== id));
+  async function handleUnblock(id: string) {
+    try {
+      await updateAdmin(id).unwrap();
+      setBlockedAdmins((prev) => prev.filter((a) => a._id !== id));
+    } catch (err) {
+      console.error("Failed to unblock admin:", err);
     }
   }
 
-  function handleDelete(id: string) {
-    setBlockedAdmins((prev) => prev.filter((a) => a.id !== id));
+  async function handleDelete(id: string) {
+    try {
+      await deleteAdmin(id).unwrap();
+      setBlockedAdmins((prev) => prev.filter((a) => a._id !== id));
+    } catch (err) {
+      console.error("Failed to delete admin:", err);
+    }
   }
 
-  function handleCreateAdmin(newAdmin: {
-    name: string;
-    email: string;
-    password: string;
-    avatar?: string;
-  }) {
-    const admin: Admin = {
-      id: `${admins.length + blockedAdmins.length + 1}`,
-      name: newAdmin.name,
-      email: newAdmin.email,
-      role: "Admin", // Default role for new admins
-      phone: "000-000-0000",
-      joinedAt: new Date().toISOString().split("T")[0],
-      avatar: newAdmin.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${newAdmin.name}`,
-    };
-    setAdmins((prev) => [admin, ...prev]);
-  }
+
 
   function handleUpdateAdmin(updatedAdmin: {
     name: string;
@@ -433,14 +447,24 @@ export default function AdminsPage() {
       </div>
 
       {/* Table area */}
-      <div>
+      <div className="relative">
+        {isLoading && (
+          <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[1px]">
+            <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          </div>
+        )}
         <AdminsTable
-          admins={paginatedAdmins}
+          admins={admins}
           onViewAdmin={setSelectedAdmin}
           onBlockAdmin={setBlockAdmin}
           onEditAdmin={setEditingAdmin}
           startIndex={startIndex}
         />
+        {!isLoading && admins.length === 0 && (
+          <div className="text-muted-foreground border-border flex h-60 items-center justify-center border-x border-b bg-card">
+            No admins found
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
@@ -448,8 +472,8 @@ export default function AdminsPage() {
         <div className="bg-card border-border rounded-b-lg border-t p-4">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="text-muted-foreground text-sm">
-              Showing {startIndex + 1} to {Math.min(endIndex, filtered.length)} of {filtered.length}{" "}
-              admins
+              Showing {startIndex + 1} to {Math.min(startIndex + admins.length, meta.totalUsers || admins.length)} of{" "}
+              {meta.totalUsers || admins.length} admins
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -494,7 +518,23 @@ export default function AdminsPage() {
       <UserDetailsModal
         open={!!selectedAdmin}
         onClose={() => setSelectedAdmin(null)}
-        user={selectedAdmin}
+        user={
+          selectedAdmin
+            ? {
+                id: selectedAdmin._id,
+                name: selectedAdmin.name,
+                email: selectedAdmin.email,
+                phone: selectedAdmin.phone || "N/A",
+                joinedAt: selectedAdmin.createdAt
+                  ? new Date(selectedAdmin.createdAt).toLocaleDateString()
+                  : "N/A",
+                avatar: selectedAdmin.image?.startsWith("http")
+                  ? selectedAdmin.image
+                  : `${imageUrl}${selectedAdmin.image}`,
+                userType: selectedAdmin.role,
+              }
+            : null
+        }
         onBlock={() => {
           if (selectedAdmin) {
             setBlockAdmin(selectedAdmin);
@@ -515,7 +555,14 @@ export default function AdminsPage() {
       <BlockedUsersModal
         open={showBlockedAdmins}
         onClose={() => setShowBlockedAdmins(false)}
-        blockedUsers={blockedAdmins}
+        blockedUsers={blockedAdmins.map((a) => ({
+          id: a._id,
+          name: a.name,
+          email: a.email,
+          phone: a.phone || "N/A",
+          joinedAt: a.createdAt ? new Date(a.createdAt).toLocaleDateString() : "N/A",
+          avatar: a.image?.startsWith("http") ? a.image : `${imageUrl}${a.image}`,
+        }))}
         onUnblock={handleUnblock}
         onDelete={handleDelete}
       />
@@ -524,7 +571,6 @@ export default function AdminsPage() {
       <CreateAdminModal
         open={showCreateAdmin}
         onClose={() => setShowCreateAdmin(false)}
-        onConfirm={handleCreateAdmin}
       />
 
       {/* Edit Admin Modal */}
@@ -532,7 +578,19 @@ export default function AdminsPage() {
         open={!!editingAdmin}
         onClose={() => setEditingAdmin(null)}
         onConfirm={handleUpdateAdmin}
-        admin={editingAdmin}
+        admin={
+          editingAdmin
+            ? {
+                id: editingAdmin._id,
+                name: editingAdmin.name,
+                email: editingAdmin.email,
+                role: editingAdmin.role,
+                avatar: editingAdmin.image?.startsWith("http")
+                  ? editingAdmin.image
+                  : `${imageUrl}${editingAdmin.image}`,
+              }
+            : null
+        }
       />
     </div>
   );
