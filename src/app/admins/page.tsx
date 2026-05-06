@@ -2,14 +2,13 @@
 
 import React from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Eye, Trash2, ChevronLeft, ChevronRight, Edit, Loader2 } from "lucide-react";
+import { Search, Eye, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BlockedUsersModal from "../users/BlockedUsersModal";
 import UserDetailsModal from "../users/UserDetailsModal";
 import DeleteAdminModal from "./DeleteAdminModal";
 import CreateAdminModal from "./CreateAdminModal";
-import EditAdminModal from "./EditAdminModal";
 import { useGetAllAdminsQuery, useUpdateAdminMutation, useDeleteUserMutation } from "../../../redux/api/adminApi";
 import { imageUrl } from "../../../config/envConfig";
 
@@ -128,13 +127,11 @@ function AdminsTable({
   admins,
   onViewAdmin,
   onDeleteAdmin,
-  onEditAdmin,
   startIndex,
 }: {
   admins: any[];
   onViewAdmin: (admin: any) => void;
   onDeleteAdmin: (admin: any) => void;
-  onEditAdmin: (admin: any) => void;
   startIndex: number;
 }) {
   return (
@@ -212,15 +209,6 @@ function AdminsTable({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8"
-                        onClick={() => onEditAdmin(a)}
-                        title="Edit Admin"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
                         onClick={() => onDeleteAdmin(a)}
                         title="Delete Admin"
@@ -271,15 +259,6 @@ function AdminsTable({
                 </div>
               </div>
               <div className="flex flex-shrink-0 gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8"
-                  onClick={() => onEditAdmin(a)}
-                  title="Edit Admin"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -335,7 +314,6 @@ export default function AdminsPage() {
   const [query, setQuery] = React.useState("");
   const [selectedAdmin, setSelectedAdmin] = React.useState<any | null>(null);
   const [deleteAdmin, setDeleteAdmin] = React.useState<any | null>(null);
-  const [editingAdmin, setEditingAdmin] = React.useState<any | null>(null);
   const [showCreateAdmin, setShowCreateAdmin] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 10;
@@ -375,19 +353,7 @@ export default function AdminsPage() {
 
 
 
-  function handleUpdateAdmin(updatedAdmin: {
-    name: string;
-    email: string;
-    role: string;
-    avatar?: string;
-  }) {
-    if (editingAdmin) {
-      setAdmins((prev) =>
-        prev.map((a) => (a.id === editingAdmin.id ? { ...a, ...updatedAdmin } : a)),
-      );
-      setEditingAdmin(null);
-    }
-  }
+
 
   return (
     <div className="bg-background min-h-screen">
@@ -429,7 +395,6 @@ export default function AdminsPage() {
           admins={admins}
           onViewAdmin={setSelectedAdmin}
           onDeleteAdmin={setDeleteAdmin}
-          onEditAdmin={setEditingAdmin}
           startIndex={startIndex}
         />
         {!isLoading && admins.length === 0 && (
@@ -541,26 +506,6 @@ export default function AdminsPage() {
       <CreateAdminModal
         open={showCreateAdmin}
         onClose={() => setShowCreateAdmin(false)}
-      />
-
-      {/* Edit Admin Modal */}
-      <EditAdminModal
-        open={!!editingAdmin}
-        onClose={() => setEditingAdmin(null)}
-        onConfirm={handleUpdateAdmin}
-        admin={
-          editingAdmin
-            ? {
-                id: editingAdmin._id,
-                name: editingAdmin.name,
-                email: editingAdmin.email,
-                role: editingAdmin.role,
-                avatar: editingAdmin.image?.startsWith("http")
-                  ? editingAdmin.image
-                  : `${imageUrl}${editingAdmin.image}`,
-              }
-            : null
-        }
       />
     </div>
   );

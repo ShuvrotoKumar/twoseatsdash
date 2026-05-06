@@ -20,14 +20,14 @@ export const adminApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ["admin"],
         }),
-        updateAdmin: builder.mutation({
-            query: (userId) => {
+        deleteAdmin: builder.mutation({
+            query: (adminId) => {
                 return {
-                    url: `dashboard/block-user?userId=${userId}`,
-                    method: "PATCH",
+                    url: `/admin/delete-admin/${adminId}`,
+                    method: "DELETE",
                 };
             },
-            invalidatesTags: ["user"],
+            invalidatesTags: ["admin"],
         }),
         deleteUser: builder.mutation({
             query: (userId) => ({
@@ -43,6 +43,5 @@ export const adminApi = baseApi.injectEndpoints({
 export const {
     useGetAllAdminsQuery,
     useCreateAdminMutation,
-    useUpdateAdminMutation,
-    useDeleteUserMutation,
+    useDeleteAdminMutation,
 } = adminApi;
