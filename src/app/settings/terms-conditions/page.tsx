@@ -12,13 +12,23 @@ import { toast } from "sonner";
 
 export default function TermsConditionsPage() {
   const router = useRouter();
-  const { data: apiResponse, isLoading: isFetching } = useGetTermsAndConditionsQuery({});
+  const { data: apiResponse, isLoading: isFetching } = useGetTermsAndConditionsQuery(undefined);
   const [updateTerms, { isLoading: isUpdating }] = useUpdateTermsAndConditionsMutation();
   const [content, setContent] = useState("");
 
   useEffect(() => {
-    if (apiResponse?.data?.description) {
-      setContent(apiResponse.data.description);
+    if (apiResponse) {
+      console.log("Terms & Conditions API Response:", apiResponse);
+      // Robust extraction: handle nested description, direct description, or raw data
+      const desc = 
+        apiResponse?.data?.description || 
+        apiResponse?.description || 
+        (typeof apiResponse?.data === "string" ? apiResponse.data : null) ||
+        (Array.isArray(apiResponse?.data) ? apiResponse.data[0]?.description : null);
+
+      if (desc && typeof desc === "string") {
+        setContent(desc);
+      }
     }
   }, [apiResponse]);
 
@@ -56,6 +66,7 @@ export default function TermsConditionsPage() {
           </div>
         )}
         <TiptapEditor
+          key={isFetching ? "loading" : "ready"}
           content={content}
           onChange={setContent}
           placeholder="Write terms and conditions..."
