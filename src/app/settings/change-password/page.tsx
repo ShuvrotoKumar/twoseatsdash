@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useChangePasswordMutation } from "../../../../redux/api/authApi";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
@@ -18,9 +19,12 @@ export default function ChangePasswordPage() {
     currentPassword?: string;
     newPassword?: string;
     confirmPassword?: string;
+    server?: string;
   }>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: typeof errors = {};
 
@@ -43,9 +47,21 @@ export default function ChangePasswordPage() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      // Handle password change
-      alert("Password changed successfully!");
-      router.push("/settings");
+      try {
+        await changePassword({
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        }).unwrap();
+        
+        alert("Password changed successfully!");
+        router.push("/settings");
+      } catch (err: any) {
+        setErrors({
+          ...newErrors,
+          server: err?.data?.message || "Failed to change password. Please try again.",
+        });
+      }
     }
   };
 
@@ -64,6 +80,11 @@ export default function ChangePasswordPage() {
       {/* Form */}
       <div className="bg-card flex justify-center p-8">
         <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6">
+          {errors.server && (
+            <div className="bg-destructive/10 text-destructive rounded-lg p-3 text-sm font-medium">
+              {errors.server}
+            </div>
+          )}
           {/* Current Password */}
           <div className="space-y-3">
             <label htmlFor="current" className="text-foreground text-lg font-medium">
@@ -155,9 +176,17 @@ export default function ChangePasswordPage() {
           {/* Submit Button */}
           <Button
             type="submit"
+            disabled={isLoading}
             className="bg-primary hover:bg-primary/90 text-primary-foreground h-12 w-full text-base"
           >
-            Save Changes
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving Changes...
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </Button>
         </form>
       </div>

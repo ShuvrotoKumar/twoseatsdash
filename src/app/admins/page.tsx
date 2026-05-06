@@ -9,7 +9,7 @@ import BlockedUsersModal from "../users/BlockedUsersModal";
 import UserDetailsModal from "../users/UserDetailsModal";
 import DeleteAdminModal from "./DeleteAdminModal";
 import CreateAdminModal from "./CreateAdminModal";
-import { useGetAllAdminsQuery, useUpdateAdminMutation, useDeleteUserMutation } from "../../../redux/api/adminApi";
+import { useGetAllAdminsQuery, useDeleteAdminMutation } from "../../../redux/api/adminApi";
 import { imageUrl } from "../../../config/envConfig";
 
 const seedAdmins = [
@@ -325,8 +325,7 @@ export default function AdminsPage() {
     limit: itemsPerPage,
   });
 
-  const [updateAdmin] = useUpdateAdminMutation();
-  const [deleteAdminMutation, { isLoading: isDeleting }] = useDeleteUserMutation();
+
 
   const admins = apiResponse?.data || [];
   const meta = apiResponse?.meta || { totalUsers: 0, currentPage: 1, limit: 10 };
@@ -340,16 +339,7 @@ export default function AdminsPage() {
   }, [query]);
 
 
-  async function handleDeleteConfirm() {
-    if (deleteAdmin) {
-      try {
-        await deleteAdminMutation(deleteAdmin._id).unwrap();
-        setDeleteAdmin(null);
-      } catch (err) {
-        console.error("Failed to delete admin:", err);
-      }
-    }
-  }
+
 
 
 
@@ -496,8 +486,6 @@ export default function AdminsPage() {
               }
             : null
         }
-        onConfirm={handleDeleteConfirm}
-        isLoading={isDeleting}
       />
 
 

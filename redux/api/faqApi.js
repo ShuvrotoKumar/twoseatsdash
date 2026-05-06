@@ -4,7 +4,7 @@ const faqApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAllFaq: builder.query({
       query: (params) => ({
-        url: "faq/get-all-faq",
+        url: "/faq/get-all-faqs",
         method: "GET",
         params,
       }),

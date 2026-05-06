@@ -3,7 +3,8 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { useDeleteAdminMutation } from "../../../redux/api/adminApi";
 
 interface Admin {
   id: string;
@@ -16,18 +17,25 @@ interface DeleteAdminModalProps {
   open: boolean;
   onClose: () => void;
   admin: Admin | null;
-  onConfirm: () => void;
-  isLoading?: boolean;
 }
 
 export default function DeleteAdminModal({
   open,
   onClose,
   admin,
-  onConfirm,
-  isLoading,
 }: DeleteAdminModalProps) {
+  const [deleteAdmin, { isLoading }] = useDeleteAdminMutation();
+
   if (!admin) return null;
+
+  const handleDelete = async () => {
+    try {
+      await deleteAdmin(admin.id).unwrap();
+      onClose();
+    } catch (err) {
+      console.error("Failed to delete admin:", err);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()} modal={false}>
@@ -69,10 +77,17 @@ export default function DeleteAdminModal({
             <Button
               variant="destructive"
               className="flex-1"
-              onClick={onConfirm}
+              onClick={handleDelete}
               disabled={isLoading}
             >
-              {isLoading ? "Deleting..." : "Delete Admin"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Admin"
+              )}
             </Button>
           </div>
         </div>
