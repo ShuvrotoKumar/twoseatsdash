@@ -19,29 +19,31 @@ import {
 
 export const description = "A linear area chart";
 
-const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
-  { month: "July", desktop: 278 },
-  { month: "August", desktop: 189 },
-  { month: "September", desktop: 239 },
-  { month: "October", desktop: 349 },
-  { month: "November", desktop: 295 },
-  { month: "December", desktop: 412 },
+const defaultChartData = [
+  { month: "January", count: 0 },
+  { month: "February", count: 0 },
+  { month: "March", count: 0 },
+  { month: "April", count: 0 },
+  { month: "May", count: 0 },
+  { month: "June", count: 0 },
+  { month: "July", count: 0 },
+  { month: "August", count: 0 },
+  { month: "September", count: 0 },
+  { month: "October", count: 0 },
+  { month: "November", count: 0 },
+  { month: "December", count: 0 },
 ];
 
 const chartConfig = {
-  desktop: {
+  count: {
     label: "Earnings",
     color: "var(--chart-1)",
   },
 } satisfies ChartConfig;
 
-export function EarningChart() {
+export function EarningChart({ data }: { data?: any[] }) {
+  const displayData = data && data.length > 0 ? data : defaultChartData;
+
   return (
     <Card className="h-full dark:border-[#F4B057]">
       <CardHeader className="p-4 sm:p-6">
@@ -66,7 +68,7 @@ export function EarningChart() {
         <ChartContainer config={chartConfig} className="aspect-auto h-full">
           <AreaChart
             accessibilityLayer
-            data={chartData}
+            data={displayData}
             margin={{
               left: 12,
               right: 12,
@@ -78,18 +80,18 @@ export function EarningChart() {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={(value) => value?.slice(0, 3)}
             />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="dot" hideLabel />}
             />
             <Area
-              dataKey="desktop"
+              dataKey="count"
               type="linear"
-              fill="var(--color-desktop)"
+              fill="var(--color-count)"
               fillOpacity={0.4}
-              stroke="var(--color-desktop)"
+              stroke="var(--color-count)"
             />
           </AreaChart>
         </ChartContainer>

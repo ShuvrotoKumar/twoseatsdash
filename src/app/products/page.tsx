@@ -15,6 +15,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ProductCategoryChart } from "@/components/ProductCategoryChart";
+import { useGetAllDashboardQuery } from "../../../redux/api/dashboardApi";
+import { Loader2 } from "lucide-react";
 
 // Inline DeleteProductModal
 function DeleteProductModal({
@@ -300,6 +302,7 @@ function ProductTable({
 }
 
 export default function ProductsPage() {
+  const { data: apiResponse, isLoading: isDashboardLoading } = useGetAllDashboardQuery({});
   const [products, setProducts] = useState<Product[]>(seedProducts);
   const [query, setQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -368,7 +371,13 @@ export default function ProductsPage() {
     <div className="bg-background min-h-screen">
       {/* Chart Section */}
       <div className="py-4">
-        <ProductCategoryChart data={chartData} />
+        {isDashboardLoading ? (
+          <div className="flex h-[200px] items-center justify-center">
+            <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <ProductCategoryChart data={(apiResponse as any)?.data?.productDistribution || chartData} />
+        )}
       </div>
 
       {/* Table area */}

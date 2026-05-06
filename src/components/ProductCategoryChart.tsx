@@ -23,13 +23,24 @@ type ProductCategoryChartProps = {
 };
 
 export function ProductCategoryChart({ data }: ProductCategoryChartProps) {
+  const chartData = React.useMemo(() => {
+    if (data && data.length > 0) return data;
+    return [
+      { category: "Technology", count: 0 },
+      { category: "Lifestyle", count: 0 },
+      { category: "Education", count: 0 },
+      { category: "Business", count: 0 },
+      { category: "Entertainment", count: 0 },
+    ];
+  }, [data]);
+
   const chartConfig = React.useMemo(() => {
     const config: ChartConfig = {
       count: {
         label: "Products",
       },
     };
-    data.forEach((item, index) => {
+    chartData.forEach((item, index) => {
       // Use chart-1 to chart-5 cyclically
       const colorVar = `var(--chart-${(index % 5) + 1})`;
       config[item.category] = {
@@ -38,14 +49,14 @@ export function ProductCategoryChart({ data }: ProductCategoryChartProps) {
       };
     });
     return config;
-  }, [data]);
+  }, [chartData]);
 
   const processedData = React.useMemo(() => {
-    return data.map((item) => ({
+    return chartData.map((item) => ({
       ...item,
       fill: `var(--color-${item.category})`,
     }));
-  }, [data]);
+  }, [chartData]);
 
   return (
     <Card className="flex flex-col dark:border-[#F4B057]">

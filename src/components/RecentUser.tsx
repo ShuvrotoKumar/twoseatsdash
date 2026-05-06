@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, Ban, ChevronLeft, ChevronRight } from "lucide-react";
 import UserDetailsModal from "@/app/users/UserDetailsModal";
 import BlockUserModal from "@/app/admins/BlockUserModal";
+import { getImageUrl } from "../../config/envConfig";
 
 
 const recentUsers = [
@@ -56,18 +57,35 @@ const recentUsers = [
   },
 ];
 
-type User = (typeof recentUsers)[0];
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  userType: string;
+  joinedDate: string;
+  avatar: string;
+};
 
-export default function RecentUser() {
+export default function RecentUser({ users: apiUsers }: { users: any[] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [blockUser, setBlockUser] = useState<User | null>(null);
-  const [users, setUsers] = useState(recentUsers);
-  const totalPages = 3;
+  const totalPages = 1;
+
+  const users: User[] = (apiUsers || []).map((u) => ({
+    id: u._id,
+    name: u.userName,
+    email: u.email,
+    phone: u.phone || "N/A",
+    userType: u.role,
+    joinedDate: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A",
+    avatar: u.image ? getImageUrl(u.image) : "",
+  }));
 
   const handleBlockConfirm = () => {
     if (blockUser) {
-      setUsers(users.filter((u) => u.id !== blockUser.id));
+      // Logic to block user via API would go here
       setBlockUser(null);
     }
   };

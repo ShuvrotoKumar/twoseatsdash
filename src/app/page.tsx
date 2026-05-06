@@ -3,10 +3,25 @@ import RecentUser from "@/components/RecentUser";
 import { UserRatio } from "@/components/UserRatio";
 import { Calendar } from "@/components/ui/calendar";
 import { CountingNumber } from "@/components/ui/CountingNumber";
+import { useGetAllDashboardQuery } from "../../redux/api/dashboardApi";
+import { Loader2 } from "lucide-react";
 import React from "react";
 
 const Dashbaord = () => {
+  const { data: apiResponse, isLoading } = useGetAllDashboardQuery({});
   const [date, setDate] = React.useState<Date | undefined>(new Date());
+
+  const totals = apiResponse?.data?.totals || { consumer: 0, serviceProvider: 0 };
+  const recentUsers = apiResponse?.data?.recentUsers || [];
+  const userRatioData = apiResponse?.data?.userRatio?.data || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <Loader2 className="text-primary h-10 w-10 animate-spin" />
+      </div>
+    );
+  }
   return (
     <div className="px-4 sm:px-0">
       {/* upper 2 blocks */}
@@ -17,10 +32,9 @@ const Dashbaord = () => {
         <div className="flex flex-1 flex-col items-center justify-center px-2">
           <p className="mb-1 text-xl font-bold text-[#0D2357] sm:mb-2 sm:text-2xl md:text-3xl lg:text-4xl dark:text-white">
             <CountingNumber
-              end={7.8}
+              end={totals.consumer}
               duration={1000}
-              decimals={1}
-              suffix="k"
+              decimals={0}
               className="mb-1 text-xl font-bold text-[#0D2357] sm:mb-2 sm:text-2xl md:text-3xl lg:text-4xl dark:text-white"
             />
           </p>
@@ -32,7 +46,7 @@ const Dashbaord = () => {
         <div className="flex flex-1 flex-col items-center justify-center px-2">
           <p className="mb-1 text-xl font-bold text-[#0D2357] sm:mb-2 sm:text-2xl md:text-3xl lg:text-4xl dark:text-white">
             <CountingNumber
-              end={249}
+              end={totals.serviceProvider}
               duration={1000}
               decimals={0}
               className="mb-1 text-xl font-bold text-[#0D2357] sm:mb-2 sm:text-2xl md:text-3xl lg:text-4xl dark:text-white"
@@ -48,7 +62,7 @@ const Dashbaord = () => {
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto]">
         {/* Chart: flexible column */}
         <div className="h-[350px] w-full sm:h-[400px]">
-          <UserRatio />
+          <UserRatio data={userRatioData} />
         </div>
 
         {/* Calendar: narrower column and padded card */}
@@ -67,7 +81,7 @@ const Dashbaord = () => {
       </div>
 
       <div className="pt-5">
-        <RecentUser />
+        <RecentUser users={recentUsers} />
       </div>
     </div>
   );

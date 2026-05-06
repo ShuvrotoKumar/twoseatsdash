@@ -3,18 +3,33 @@
 import { EarningChart } from "@/components/EarningChart";
 import { CountingNumber } from "@/components/ui/CountingNumber";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useGetAllDashboardQuery } from "../../../redux/api/dashboardApi";
+import { useGetEarningQuery } from "../../../redux/api/earningApi";
 
 const Earnings = () => {
-  // These values would come from your API
-  const avgTransaction = 1234.56;
-  const currentMonthRevenue = 5678.9;
-  const totalRevenue = 12345.67;
-
-  // Pagination and filter state
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
+
+  const { data: dashboardResponse, isLoading: isDashboardLoading } = useGetAllDashboardQuery({});
+  const { data: earningResponse, isLoading: isEarningLoading } = useGetEarningQuery({
+    year: selectedYear,
+    page: currentPage,
+  });
+
+  const dashboardData = dashboardResponse?.data || {};
+  const transactions = earningResponse?.data?.payments || [];
+  const totalPages = earningResponse?.data?.meta?.totalPages || 1;
+  const totalItems = earningResponse?.data?.meta?.total || 0;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  // Stats from dashboard
+  const avgTransaction = dashboardData.avgTransaction || 0;
+  const currentMonthRevenue = dashboardData.currentMonthRevenue || 0;
+  const totalRevenue = dashboardData.totalRevenue || 0;
+  const earningChartData = dashboardData.earningRatio?.data || [];
 
   // Available years
   const availableYears = [2025, 2024, 2023, 2022, 2021];
@@ -175,7 +190,13 @@ const Earnings = () => {
 
       {/* chart */}
       <div className="h-[350px] w-full sm:h-[400px]">
-        <EarningChart />
+        {isDashboardLoading ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <EarningChart data={earningChartData} />
+        )}
       </div>
 
       {/* table  */}
@@ -233,45 +254,53 @@ const Earnings = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentTransactions.map((transaction) => (
-                  <tr
-                    key={transaction.id}
-                    className="border-b border-[#E2E8F0] last:border-0 dark:border-[#F4B057]/30"
-                  >
-                    <td className="py-3 text-sm text-[#0D2357] dark:text-white">
-                      {transaction.id}
-                    </td>
-                    <td className="py-3 text-sm text-[#0D2357] dark:text-white">
-                      {transaction.date}
-                    </td>
-                    <td className="py-3 text-sm text-[#0D2357] dark:text-white">
-                      {transaction.description}
-                    </td>
-                    <td className="py-3 text-sm text-[#0D2357] dark:text-white">
-                      {transaction.type}
-                    </td>
-                    <td
-                      className={`py-3 text-right text-sm font-medium ${
-                        transaction.amount < 0
-                          ? "text-red-600 dark:text-red-400"
-                          : "text-green-600 dark:text-green-400"
-                      }`}
-                    >
-                      ${Math.abs(transaction.amount).toLocaleString()}
-                    </td>
-                    <td className="py-3 text-center">
-                      <span
-                        className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                          transaction.status === "Completed"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                        }`}
-                      >
-                        {transaction.status}
-                      </span>
+                {isEarningLoading ? (
+                  <tr>
+                    <td colSpan={6} className="py-10 text-center">
+                      <Loader2 className="text-primary mx-auto h-8 w-8 animate-spin" />
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  transactions.map((transaction: any) => (
+                    <tr
+                      key={transaction._id}
+                      className="border-b border-[#E2E8F0] last:border-0 dark:border-[#F4B057]/30"
+                    >
+                      <td className="py-3 text-sm text-[#0D2357] dark:text-white">
+                        {transaction._id.slice(-8).toUpperCase()}
+                      </td>
+                      <td className="py-3 text-sm text-[#0D2357] dark:text-white">
+                        {new Date(transaction.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 text-sm text-[#0D2357] dark:text-white">
+                        {transaction.description || "N/A"}
+                      </td>
+                      <td className="py-3 text-sm text-[#0D2357] dark:text-white">
+                        {transaction.paymentType || "Sale"}
+                      </td>
+                      <td
+                        className={`py-3 text-right text-sm font-medium ${
+                          transaction.amount < 0
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-green-600 dark:text-green-400"
+                        }`}
+                      >
+                        ${Math.abs(transaction.amount).toLocaleString()}
+                      </td>
+                      <td className="py-3 text-center">
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
+                            transaction.status === "succeeded" || transaction.status === "Completed"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                          }`}
+                        >
+                          {transaction.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

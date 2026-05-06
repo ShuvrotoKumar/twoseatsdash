@@ -15,7 +15,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../redux/Slice/authSlice";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,6 +94,28 @@ const AppSidebar = () => {
   const { state } = useSidebar();
   const pathname = usePathname();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const router = useRouter();
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    // Dispatch logout action to reset Redux state
+    dispatch(logout());
+
+    // Clear local storage
+    localStorage.removeItem("token");
+
+    // Clear cookies (specifically the token cookie if it exists)
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    
+    // Optional: Clear any other related auth cookies
+    document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+    toast.success("Logged out successfully");
+    
+    // Close modal and redirect
+    setLogoutModalOpen(false);
+    router.push("/login");
+  };
 
   const isActive = (url: string) => {
     if (url === "/") {
@@ -204,20 +229,13 @@ const AppSidebar = () => {
             >
               Cancel
             </Button>
-            <Link href="/login">
-              <Button
-                type="button"
-                onClick={() => {
-                  // Add your logout logic here
-                  console.log("User logged out");
-                  // Example: router.push('/login');
-                  setLogoutModalOpen(false);
-                }}
-                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground flex-1"
-              >
-                Log Out
-              </Button>
-            </Link>
+            <Button
+              type="button"
+              onClick={handleLogout}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground flex-1"
+            >
+              Log Out
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

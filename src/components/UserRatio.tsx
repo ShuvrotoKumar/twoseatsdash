@@ -37,13 +37,13 @@ function sampleDataForYear(year: number) {
 }
 
 const chartConfig = {
-  desktop: {
+  count: {
     label: "Users",
     color: "#ff0a17",
   },
 } satisfies ChartConfig;
 
-export function UserRatio() {
+export function UserRatio({ data }: { data: any[] }) {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState<number>(currentYear);
 
@@ -52,7 +52,10 @@ export function UserRatio() {
     return Array.from({ length: 5 }).map((_, idx) => currentYear - idx);
   }, [currentYear]);
 
-  const chartData = useMemo(() => sampleDataForYear(year), [year]);
+  const chartData = useMemo(() => {
+    if (data && data.length > 0) return data;
+    return sampleDataForYear(year);
+  }, [data, year]);
 
   return (
     <Card className="h-full dark:border-[#F4B057]">
@@ -102,7 +105,7 @@ export function UserRatio() {
               className="text-xs sm:text-sm"
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
+            <Bar dataKey="count" fill="var(--color-count)" radius={4} />
           </BarChart>
         </ChartContainer>
       </CardContent>
