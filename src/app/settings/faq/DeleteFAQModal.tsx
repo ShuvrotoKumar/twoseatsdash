@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useDeleteFaqMutation } from "../../../../redux/api/faqApi";
+import { toast } from "sonner";
 
 type DeleteFAQModalProps = {
   open: boolean;
@@ -23,8 +24,10 @@ export default function DeleteFAQModal({
   const handleConfirm = async () => {
     try {
       await deleteFaq({ _id: faq._id }).unwrap();
+      toast.success("FAQ deleted successfully!");
       onClose();
-    } catch (err) {
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to delete FAQ");
       console.error("Failed to delete FAQ:", err);
     }
   };

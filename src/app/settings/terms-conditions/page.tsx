@@ -8,6 +8,7 @@ import TiptapEditor from "@/components/ui/TiptapEditor";
 import { useGetTermsAndConditionsQuery, useUpdateTermsAndConditionsMutation } from "../../../../redux/api/termsApi";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function TermsConditionsPage() {
   const router = useRouter();
@@ -28,8 +29,9 @@ export default function TermsConditionsPage() {
           description: content,
         },
       }).unwrap();
-      alert("Terms & Conditions saved!");
-    } catch (err) {
+      toast.success("Terms & Conditions saved successfully!");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to save Terms & Conditions");
       console.error("Failed to save terms and conditions:", err);
     }
   };

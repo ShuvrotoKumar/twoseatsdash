@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Upload, Loader2 } from "lucide-react";
 import { useCreateAdminMutation } from "../../../redux/api/adminApi";
+import { toast } from "sonner";
 
 type CreateAdminModalProps = {
   open: boolean;
@@ -84,10 +85,11 @@ export default function CreateAdminModal({ open, onClose }: CreateAdminModalProp
         }
 
         await createAdmin(formData).unwrap();
+        toast.success("Admin created successfully!");
         handleClose();
-      } catch (err) {
+      } catch (err: any) {
+        toast.error(err?.data?.message || "Failed to create admin");
         console.error("Failed to create admin:", err);
-        // You could add error handling here, e.g. setting a top-level error state
       }
     }
   };

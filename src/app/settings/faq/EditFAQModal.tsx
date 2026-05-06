@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import TiptapEditor from "@/components/ui/TiptapEditor";
 import { useUpdateFaqMutation } from "../../../../redux/api/faqApi";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type EditFAQModalProps = {
   open: boolean;
@@ -56,8 +57,10 @@ export default function EditFAQModal({ open, onClose, faq }: EditFAQModalProps) 
           question,
           answer,
         }).unwrap();
+        toast.success("FAQ updated successfully!");
         handleClose();
-      } catch (err) {
+      } catch (err: any) {
+        toast.error(err?.data?.message || "Failed to update FAQ");
         console.error("Failed to update FAQ:", err);
       }
     }

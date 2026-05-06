@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import TiptapEditor from "@/components/ui/TiptapEditor";
 import { useCreateFaqMutation } from "../../../../redux/api/faqApi";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type CreateFAQModalProps = {
   open: boolean;
@@ -47,8 +48,10 @@ export default function CreateFAQModal({ open, onClose }: CreateFAQModalProps) {
           question,
           answer,
         }).unwrap();
+        toast.success("FAQ created successfully!");
         handleClose();
-      } catch (err) {
+      } catch (err: any) {
+        toast.error(err?.data?.message || "Failed to create FAQ");
         console.error("Failed to create FAQ:", err);
       }
     }

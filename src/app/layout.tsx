@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/common/theme-provider";
 import NotificationProvider from "@/context/notification-context";
 import DashboardLayout from "@/app/DashboardLayout";
 import ReduxProvider from "../../redux/ReduxProvider";
+import { Toaster } from "sonner";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -42,6 +43,7 @@ export default async function RootLayout({
             </NotificationProvider>
           </ReduxProvider>
         </ThemeProvider>
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   );

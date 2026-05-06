@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useDeleteAdminMutation } from "../../../redux/api/adminApi";
+import { toast } from "sonner";
 
 interface Admin {
   id: string;
@@ -31,8 +32,10 @@ export default function DeleteAdminModal({
   const handleDelete = async () => {
     try {
       await deleteAdmin(admin.id).unwrap();
+      toast.success("Admin deleted successfully!");
       onClose();
-    } catch (err) {
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to delete admin");
       console.error("Failed to delete admin:", err);
     }
   };

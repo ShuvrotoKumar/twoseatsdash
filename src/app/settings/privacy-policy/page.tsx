@@ -8,6 +8,7 @@ import TiptapEditor from "@/components/ui/TiptapEditor";
 import { useGetPrivacyQuery, useUpdatePrivacyMutation } from "../../../../redux/api/privacyApi";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function PrivacyPolicyPage() {
   const router = useRouter();
@@ -28,8 +29,9 @@ export default function PrivacyPolicyPage() {
           description: content,
         },
       }).unwrap();
-      alert("Privacy Policy saved!");
-    } catch (err) {
+      toast.success("Privacy Policy saved successfully!");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to save Privacy Policy");
       console.error("Failed to save privacy policy:", err);
     }
   };

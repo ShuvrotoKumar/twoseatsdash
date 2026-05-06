@@ -8,6 +8,7 @@ import TiptapEditor from "@/components/ui/TiptapEditor";
 import { useGetAboutUsQuery, useUpdateAboutUsMutation } from "../../../../redux/api/aboutusApi";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function AboutUsPage() {
   const router = useRouter();
@@ -28,8 +29,9 @@ export default function AboutUsPage() {
           description: content,
         },
       }).unwrap();
-      alert("About Us saved!");
-    } catch (err) {
+      toast.success("About Us saved successfully!");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to save About Us");
       console.error("Failed to save about us:", err);
     }
   };

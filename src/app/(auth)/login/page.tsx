@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 import { useLogInMutation } from "../../../../redux/api/authApi";
 import { setUser } from "../../../../redux/Slice/authSlice";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function LoginPage() {
           // Store token and user info
           dispatch(setUser({ user: res.data.admin, token: res.data.token }));
           localStorage.setItem("token", res.data.token);
-
+          toast.success("Login successful!");
           // Redirect to home/dashboard
           router.push("/");
         } else {

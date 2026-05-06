@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function ProfilePage() {
 
     if (Object.keys(newErrors).length === 0) {
       // Handle profile update
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
     }
   };
 

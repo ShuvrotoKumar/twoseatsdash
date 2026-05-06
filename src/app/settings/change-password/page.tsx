@@ -5,6 +5,7 @@ import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import { useChangePasswordMutation } from "../../../../redux/api/authApi";
 
 export default function ChangePasswordPage() {
@@ -54,7 +55,7 @@ export default function ChangePasswordPage() {
           confirmPassword,
         }).unwrap();
         
-        alert("Password changed successfully!");
+        toast.success("Password changed successfully!");
         router.push("/settings");
       } catch (err: any) {
         setErrors({
