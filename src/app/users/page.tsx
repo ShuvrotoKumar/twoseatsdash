@@ -246,7 +246,7 @@ type User = (typeof seedUsers)[0];
 
 export default function UsersPage() {
   const [query, setQuery] = React.useState("");
-  const [activeTab, setActiveTab] = React.useState<"clients" | "providers">("providers");
+  const [activeTab, setActiveTab] = React.useState<"clients" | "providers">("clients");
   const [selectedUser, setSelectedUser] = React.useState<any | null>(null);
   const [blockUser, setBlockUser] = React.useState<any | null>(null);
   const [showBlockedUsers, setShowBlockedUsers] = React.useState(false);
@@ -264,7 +264,12 @@ export default function UsersPage() {
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
 
-  const users = apiResponse?.data || [];
+  // Safeguard: Filter data client-side as well in case the API returns mixed results
+  const allUsers = apiResponse?.data || [];
+  const users = allUsers.filter((u: any) => 
+    activeTab === "clients" ? u.role === "consumer" : u.role === "serviceProvider"
+  );
+  
   const meta = apiResponse?.meta || { totalUsers: 0, currentPage: 1, limit: 10 };
 
   // For now, we'll keep a local state for blocked users to demonstrate the modal
