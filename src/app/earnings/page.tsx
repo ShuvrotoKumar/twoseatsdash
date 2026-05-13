@@ -4,12 +4,12 @@ import { EarningChart } from "@/components/EarningChart";
 import { CountingNumber } from "@/components/ui/CountingNumber";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { useGetAllDashboardQuery } from "../../../redux/api/dashboardApi";
 import { useGetEarningQuery } from "../../../redux/api/earningApi";
 
 const Earnings = () => {
+  const availableYears = [2025, 2024, 2023, 2022, 2021];
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(availableYears[0]);
   const itemsPerPage = 10;
 
   const { data: earningResponse, isLoading: isEarningLoading } = useGetEarningQuery({
@@ -20,6 +20,7 @@ const Earnings = () => {
   const earningData = earningResponse?.data || {};
   const overview = earningData.overview || {};
   const monthlyChart = earningData.monthlyChart || [];
+  const planBreakdown = earningData.planBreakdown || [];
 
   // Map monthlyChart for EarningChart (which expects 'count')
   const earningChartData = monthlyChart.map((item: any) => ({
@@ -31,96 +32,26 @@ const Earnings = () => {
   const totalSubscriptions = overview.totalSubscriptions || 0;
   const activeUsers = overview.activeUsers || 0;
 
-  // Available years
-  const availableYears = [2025, 2024, 2023, 2022, 2021];
+  const apiTransactions = (earningData.transactions || earningData.allTransactions || []).map((transaction: any) => ({
+    ...transaction,
+    _id: transaction._id || transaction.id,
+  }));
 
-  // Sample data - replace with your API data
-  const allTransactions = [
-    {
-      id: "TXN001",
-      date: "2025-11-15",
-      description: "Product Sale",
-      type: "Sale",
-      amount: 234.5,
-      status: "Completed",
-    },
-    {
-      id: "TXN002",
-      date: "2025-11-14",
-      description: "Service Payment",
-      type: "Service",
-      amount: 450.0,
-      status: "Completed",
-    },
-    {
-      id: "TXN003",
-      date: "2025-11-13",
-      description: "Subscription",
-      type: "Recurring",
-      amount: 99.99,
-      status: "Completed",
-    },
-    {
-      id: "TXN004",
-      date: "2025-11-12",
-      description: "Product Sale",
-      type: "Sale",
-      amount: 189.0,
-      status: "Pending",
-    },
-    {
-      id: "TXN005",
-      date: "2025-11-11",
-      description: "Refund",
-      type: "Refund",
-      amount: -50.0,
-      status: "Completed",
-    },
-    {
-      id: "TXN006",
-      date: "2025-11-10",
-      description: "Product Sale",
-      type: "Sale",
-      amount: 320.0,
-      status: "Completed",
-    },
-    {
-      id: "TXN007",
-      date: "2024-11-09",
-      description: "Service Payment",
-      type: "Service",
-      amount: 550.0,
-      status: "Completed",
-    },
-    {
-      id: "TXN008",
-      date: "2024-11-08",
-      description: "Subscription",
-      type: "Recurring",
-      amount: 99.99,
-      status: "Completed",
-    },
-    {
-      id: "TXN009",
-      date: "2025-12-20",
-      description: "Product Sale",
-      type: "Sale",
-      amount: 275.0,
-      status: "Completed",
-    },
-    {
-      id: "TXN010",
-      date: "2025-12-15",
-      description: "Service Payment",
-      type: "Service",
-      amount: 400.0,
-      status: "Completed",
-    },
-  ];
+  const planBreakdownTransactions = planBreakdown.map((plan: any) => ({
+    _id: plan._id,
+    createdAt: plan.createdAt ? new Date(plan.createdAt).toISOString() : `${selectedYear}-01-01T00:00:00.000Z`,
+    description: plan.planName,
+    paymentType: "Plan Breakdown",
+    amount: plan.count,
+    status: "Count",
+  }));
+
+  const allTransactions = apiTransactions.length > 0 ? apiTransactions : planBreakdownTransactions;
 
   // Filter transactions by selected year
-  const filteredTransactions = allTransactions.filter((transaction) => {
-    const transactionYear = new Date(transaction.date).getFullYear();
+  const filteredTransactions = allTransactions.filter((transaction: any) => {
+    const transactionDate = transaction.date || transaction.createdAt;
+    const transactionYear = new Date(transactionDate).getFullYear();
     return transactionYear === selectedYear;
   });
 
@@ -186,6 +117,15 @@ const Earnings = () => {
         </div>
       </div>
 
+      {/* Plan Breakdown */}
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+  {planBreakdown.map((plan: any) => (
+    <div key={plan._id} className="flex flex-col items-center rounded-lg border border-[#E2E8F0] bg-white p-4 shadow-sm dark:border-[#F4B057] dark:bg-sidebar">
+      <p className="text-lg font-medium text-[#0D2357] dark:text-white">{plan.planName}</p>
+      <p className="text-2xl font-bold text-[#0D2357] dark:text-white">{plan.count}</p>
+    </div>
+  ))}
+</div>
       {/* chart */}
       <div className="h-[350px] w-full sm:h-[400px]">
         {isEarningLoading ? (

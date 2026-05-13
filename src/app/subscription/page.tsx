@@ -193,8 +193,6 @@ const Subscription = () => {
               </button>
             </div>
           </div>
-        </div>
-      </div>
 
       <ManageSubscriptionModal
         isOpen={isModalOpen}
