@@ -21,10 +21,10 @@ const subscriptionApi = baseApi.injectEndpoints({
     }),
     updateSubscriptionPlan: builder.mutation({
       query: ({ subscriptionId, role, data }) => ({
-        url: "subscription/update-subscription-plan",
+        url: `/subscription/update-subscription/${subscriptionId}`,
         method: "PATCH",
         // Send both casings to be safe
-        params: { subscriptionId, role },
+        params: { role },
         body: data,
       }),
       invalidatesTags: ["subscription"],

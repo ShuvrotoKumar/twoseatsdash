@@ -4,7 +4,7 @@ const earningApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getEarning: builder.query({
       query: ({ year, page }) => ({
-        url: "payment/get-all-payment",
+        url: "/payment/admin/earnings",
         method: "GET",
         params: {
           year,

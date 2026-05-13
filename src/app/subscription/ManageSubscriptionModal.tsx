@@ -1,11 +1,12 @@
 "use client";
 
 import { X, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Plan {
   name: string;
-  price: string;
+  price: string | number;
+  discountPrice?: string | number;
   cycle: string;
   features: string[];
 }
@@ -13,68 +14,57 @@ interface Plan {
 interface ManageSubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  monthlyPlan: Plan;
-  yearlyPlan: Plan;
-  onSave: (monthly: Plan, yearly: Plan) => void;
+  plan: Plan | null;
+  onSave: (plan: Plan) => void;
 }
 
 export function ManageSubscriptionModal({
   isOpen,
   onClose,
-  monthlyPlan,
-  yearlyPlan,
+  plan,
   onSave,
 }: ManageSubscriptionModalProps) {
-  const [monthly, setMonthly] = useState(monthlyPlan);
-  const [yearly, setYearly] = useState(yearlyPlan);
+  const [editedPlan, setEditedPlan] = useState<Plan | null>(null);
 
-  if (!isOpen) return null;
+  // Update internal state when plan changes
+  useEffect(() => {
+    if (plan) {
+      setEditedPlan(plan);
+    }
+  }, [plan]);
+
+  if (!isOpen || !editedPlan) return null;
 
   const handleSave = () => {
-    onSave(monthly, yearly);
+    if (editedPlan) {
+      onSave(editedPlan);
+    }
     onClose();
   };
 
-  const addFeature = (planType: "monthly" | "yearly") => {
-    if (planType === "monthly") {
-      setMonthly({ ...monthly, features: [...monthly.features, ""] });
-    } else {
-      setYearly({ ...yearly, features: [...yearly.features, ""] });
-    }
+  const addFeature = () => {
+    setEditedPlan({ ...editedPlan, features: [...editedPlan.features, ""] });
   };
 
-  const removeFeature = (planType: "monthly" | "yearly", index: number) => {
-    if (planType === "monthly") {
-      setMonthly({
-        ...monthly,
-        features: monthly.features.filter((_, i) => i !== index),
-      });
-    } else {
-      setYearly({
-        ...yearly,
-        features: yearly.features.filter((_, i) => i !== index),
-      });
-    }
+  const removeFeature = (index: number) => {
+    setEditedPlan({
+      ...editedPlan,
+      features: editedPlan.features.filter((_, i) => i !== index),
+    });
   };
 
-  const updateFeature = (planType: "monthly" | "yearly", index: number, value: string) => {
-    if (planType === "monthly") {
-      const newFeatures = [...monthly.features];
-      newFeatures[index] = value;
-      setMonthly({ ...monthly, features: newFeatures });
-    } else {
-      const newFeatures = [...yearly.features];
-      newFeatures[index] = value;
-      setYearly({ ...yearly, features: newFeatures });
-    }
+  const updateFeature = (index: number, value: string) => {
+    const newFeatures = [...editedPlan.features];
+    newFeatures[index] = value;
+    setEditedPlan({ ...editedPlan, features: newFeatures });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="dark:bg-sidebar max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-lg border border-[#E2E8F0] bg-white shadow-lg dark:border-[#F4B057]">
+      <div className="dark:bg-sidebar max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-[#E2E8F0] bg-white shadow-lg dark:border-[#F4B057]">
         <div className="dark:bg-sidebar sticky top-0 z-10 flex items-center justify-between border-b border-[#E2E8F0] bg-white p-4 dark:border-[#F4B057]/30">
           <h2 className="text-lg font-semibold text-[#0D2357] dark:text-white">
-            Manage Subscription Plans
+            Manage Subscription Plan
           </h2>
           <button
             onClick={onClose}
@@ -84,43 +74,31 @@ export function ManageSubscriptionModal({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
-          {/* Monthly Plan */}
+        <div className="p-6">
           <div className="rounded-lg border border-[#E2E8F0] p-4 dark:border-[#F4B057]/30">
             <h3 className="mb-4 text-base font-semibold text-[#0D2357] dark:text-white">
-              Monthly Plan
+              Plan Details
             </h3>
             <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-[#0D2357] dark:text-white">
-                  Plan Name
-                </label>
-                <input
-                  type="text"
-                  value={monthly.name}
-                  onChange={(e) => setMonthly({ ...monthly, name: e.target.value })}
-                  className="dark:bg-sidebar w-full rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0D2357] focus:border-[#F4B057] focus:outline-none dark:border-[#F4B057] dark:text-white"
-                />
-              </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-[#0D2357] dark:text-white">
                   Price
                 </label>
                 <input
                   type="text"
-                  value={monthly.price}
-                  onChange={(e) => setMonthly({ ...monthly, price: e.target.value })}
+                  value={editedPlan.price}
+                  onChange={(e) => setEditedPlan({ ...editedPlan, price: e.target.value })}
                   className="dark:bg-sidebar w-full rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0D2357] focus:border-[#F4B057] focus:outline-none dark:border-[#F4B057] dark:text-white"
                 />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-[#0D2357] dark:text-white">
-                  Billing Cycle
+                  Discount Price
                 </label>
                 <input
                   type="text"
-                  value={monthly.cycle}
-                  onChange={(e) => setMonthly({ ...monthly, cycle: e.target.value })}
+                  value={editedPlan.discountPrice || ""}
+                  onChange={(e) => setEditedPlan({ ...editedPlan, discountPrice: e.target.value })}
                   className="dark:bg-sidebar w-full rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0D2357] focus:border-[#F4B057] focus:outline-none dark:border-[#F4B057] dark:text-white"
                 />
               </div>
@@ -130,7 +108,7 @@ export function ManageSubscriptionModal({
                     Features
                   </label>
                   <button
-                    onClick={() => addFeature("monthly")}
+                    onClick={addFeature}
                     className="flex items-center gap-1 rounded-md bg-[#F4B057] px-2 py-1 text-xs text-white hover:bg-[#F4B057]/90"
                   >
                     <Plus className="h-3 w-3" />
@@ -138,90 +116,16 @@ export function ManageSubscriptionModal({
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {monthly.features.map((feature, index) => (
+                  {editedPlan.features.map((feature, index) => (
                     <div key={index} className="flex gap-2">
                       <input
                         type="text"
                         value={feature}
-                        onChange={(e) => updateFeature("monthly", index, e.target.value)}
+                        onChange={(e) => updateFeature(index, e.target.value)}
                         className="dark:bg-sidebar flex-1 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0D2357] focus:border-[#F4B057] focus:outline-none dark:border-[#F4B057] dark:text-white"
                       />
                       <button
-                        onClick={() => removeFeature("monthly", index)}
-                        className="rounded-md border border-red-200 p-2 text-red-600 hover:bg-red-50 dark:border-red-900/30 dark:text-red-400 dark:hover:bg-red-900/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Yearly Plan */}
-          <div className="rounded-lg border border-[#E2E8F0] p-4 dark:border-[#F4B057]/30">
-            <h3 className="mb-4 text-base font-semibold text-[#0D2357] dark:text-white">
-              Yearly Plan
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-[#0D2357] dark:text-white">
-                  Plan Name
-                </label>
-                <input
-                  type="text"
-                  value={yearly.name}
-                  onChange={(e) => setYearly({ ...yearly, name: e.target.value })}
-                  className="dark:bg-sidebar w-full rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0D2357] focus:border-[#F4B057] focus:outline-none dark:border-[#F4B057] dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-[#0D2357] dark:text-white">
-                  Price
-                </label>
-                <input
-                  type="text"
-                  value={yearly.price}
-                  onChange={(e) => setYearly({ ...yearly, price: e.target.value })}
-                  className="dark:bg-sidebar w-full rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0D2357] focus:border-[#F4B057] focus:outline-none dark:border-[#F4B057] dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-[#0D2357] dark:text-white">
-                  Billing Cycle
-                </label>
-                <input
-                  type="text"
-                  value={yearly.cycle}
-                  onChange={(e) => setYearly({ ...yearly, cycle: e.target.value })}
-                  className="dark:bg-sidebar w-full rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0D2357] focus:border-[#F4B057] focus:outline-none dark:border-[#F4B057] dark:text-white"
-                />
-              </div>
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-medium text-[#0D2357] dark:text-white">
-                    Features
-                  </label>
-                  <button
-                    onClick={() => addFeature("yearly")}
-                    className="flex items-center gap-1 rounded-md bg-[#F4B057] px-2 py-1 text-xs text-white hover:bg-[#F4B057]/90"
-                  >
-                    <Plus className="h-3 w-3" />
-                    Add
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {yearly.features.map((feature, index) => (
-                    <div key={index} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={feature}
-                        onChange={(e) => updateFeature("yearly", index, e.target.value)}
-                        className="dark:bg-sidebar flex-1 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0D2357] focus:border-[#F4B057] focus:outline-none dark:border-[#F4B057] dark:text-white"
-                      />
-                      <button
-                        onClick={() => removeFeature("yearly", index)}
+                        onClick={() => removeFeature(index)}
                         className="rounded-md border border-red-200 p-2 text-red-600 hover:bg-red-50 dark:border-red-900/30 dark:text-red-400 dark:hover:bg-red-900/10"
                       >
                         <Trash2 className="h-4 w-4" />

@@ -12,24 +12,24 @@ const Earnings = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const itemsPerPage = 10;
 
-  const { data: dashboardResponse, isLoading: isDashboardLoading } = useGetAllDashboardQuery({});
   const { data: earningResponse, isLoading: isEarningLoading } = useGetEarningQuery({
     year: selectedYear,
     page: currentPage,
   });
 
-  const dashboardData = dashboardResponse?.data || {};
-  const transactions = earningResponse?.data?.payments || [];
-  const totalPages = earningResponse?.data?.meta?.totalPages || 1;
-  const totalItems = earningResponse?.data?.meta?.total || 0;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  const earningData = earningResponse?.data || {};
+  const overview = earningData.overview || {};
+  const monthlyChart = earningData.monthlyChart || [];
 
-  // Stats from dashboard
-  const avgTransaction = dashboardData.avgTransaction || 0;
-  const currentMonthRevenue = dashboardData.currentMonthRevenue || 0;
-  const totalRevenue = dashboardData.totalRevenue || 0;
-  const earningChartData = dashboardData.earningRatio?.data || [];
+  // Map monthlyChart for EarningChart (which expects 'count')
+  const earningChartData = monthlyChart.map((item: any) => ({
+    month: item.month,
+    count: item.earnings || 0,
+  }));
+
+  const totalRevenue = overview.totalRevenue || 0;
+  const totalSubscriptions = overview.totalSubscriptions || 0;
+  const activeUsers = overview.activeUsers || 0;
 
   // Available years
   const availableYears = [2025, 2024, 2023, 2022, 2021];
@@ -145,36 +145,6 @@ const Earnings = () => {
         <div className="flex flex-1 flex-col items-center justify-center px-2">
           <p className="ipad:text-3xl mb-2 text-2xl font-bold text-[#0D2357] max-md:text-xl lg:text-4xl dark:text-white">
             <CountingNumber
-              end={avgTransaction}
-              duration={1000}
-              decimals={2}
-              prefix="$"
-              className="ipad:text-3xl mb-2 text-2xl font-bold text-[#0D2357] max-md:text-xl lg:text-4xl dark:text-white"
-            />
-          </p>
-          <span className="text-center text-sm font-medium text-[#0D2357] lg:text-lg dark:text-white">
-            Average Transaction
-          </span>
-        </div>
-        <div className="mx-4 h-16 w-px bg-[#F4B057]" />
-        <div className="flex flex-1 flex-col items-center justify-center px-2">
-          <p className="ipad:text-3xl mb-2 text-2xl font-bold text-[#0D2357] max-md:text-xl lg:text-4xl dark:text-white">
-            <CountingNumber
-              end={currentMonthRevenue}
-              duration={1000}
-              decimals={2}
-              prefix="$"
-              className="ipad:text-3xl mb-2 text-2xl font-bold text-[#0D2357] max-md:text-xl lg:text-4xl dark:text-white"
-            />
-          </p>
-          <span className="text-center text-sm font-medium text-[#0D2357] lg:text-lg dark:text-white">
-            Current Month Revenue
-          </span>
-        </div>
-        <div className="mx-4 h-16 w-px bg-[#F4B057]" />
-        <div className="flex flex-1 flex-col items-center justify-center px-2">
-          <p className="ipad:text-3xl mb-2 text-2xl font-bold text-[#0D2357] max-md:text-xl lg:text-4xl dark:text-white">
-            <CountingNumber
               end={totalRevenue}
               duration={1000}
               decimals={2}
@@ -186,11 +156,39 @@ const Earnings = () => {
             Total Revenue
           </span>
         </div>
+        <div className="mx-4 h-16 w-px bg-[#F4B057]" />
+        <div className="flex flex-1 flex-col items-center justify-center px-2">
+          <p className="ipad:text-3xl mb-2 text-2xl font-bold text-[#0D2357] max-md:text-xl lg:text-4xl dark:text-white">
+            <CountingNumber
+              end={totalSubscriptions}
+              duration={1000}
+              decimals={0}
+              className="ipad:text-3xl mb-2 text-2xl font-bold text-[#0D2357] max-md:text-xl lg:text-4xl dark:text-white"
+            />
+          </p>
+          <span className="text-center text-sm font-medium text-[#0D2357] lg:text-lg dark:text-white">
+            Total Subscriptions
+          </span>
+        </div>
+        <div className="mx-4 h-16 w-px bg-[#F4B057]" />
+        <div className="flex flex-1 flex-col items-center justify-center px-2">
+          <p className="ipad:text-3xl mb-2 text-2xl font-bold text-[#0D2357] max-md:text-xl lg:text-4xl dark:text-white">
+            <CountingNumber
+              end={activeUsers}
+              duration={1000}
+              decimals={0}
+              className="ipad:text-3xl mb-2 text-2xl font-bold text-[#0D2357] max-md:text-xl lg:text-4xl dark:text-white"
+            />
+          </p>
+          <span className="text-center text-sm font-medium text-[#0D2357] lg:text-lg dark:text-white">
+            Active Users
+          </span>
+        </div>
       </div>
 
       {/* chart */}
       <div className="h-[350px] w-full sm:h-[400px]">
-        {isDashboardLoading ? (
+        {isEarningLoading ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="text-primary h-8 w-8 animate-spin" />
           </div>
@@ -261,7 +259,7 @@ const Earnings = () => {
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((transaction: any) => (
+                  currentTransactions.map((transaction: any) => (
                     <tr
                       key={transaction._id}
                       className="border-b border-[#E2E8F0] last:border-0 dark:border-[#F4B057]/30"
@@ -308,8 +306,8 @@ const Earnings = () => {
           {/* Pagination */}
           <div className="mt-4 flex flex-col items-start justify-between gap-3 border-t border-[#E2E8F0] pt-4 sm:flex-row sm:items-center dark:border-[#F4B057]/30">
             <div className="text-sm text-[#0D2357] dark:text-white">
-              Showing {filteredTransactions.length > 0 ? startIndex + 1 : 0} to{" "}
-              {Math.min(endIndex, filteredTransactions.length)} of {filteredTransactions.length}{" "}
+              Showing {filteredTransactions.length > 0 ? filteredStartIndex + 1 : 0} to{" "}
+              {Math.min(filteredEndIndex, filteredTransactions.length)} of {filteredTransactions.length}{" "}
               transactions
             </div>
             <div className="flex items-center gap-2">
@@ -320,7 +318,7 @@ const Earnings = () => {
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              {Array.from({ length: filteredTotalPages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
@@ -334,8 +332,8 @@ const Earnings = () => {
                 </button>
               ))}
               <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, filteredTotalPages))}
+                disabled={currentPage === filteredTotalPages}
                 className="dark:bg-sidebar flex h-8 w-8 items-center justify-center rounded border border-[#E2E8F0] bg-white text-[#0D2357] transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#F4B057] dark:text-white dark:hover:bg-[#F4B057]/10"
               >
                 <ChevronRight className="h-4 w-4" />
