@@ -130,17 +130,10 @@ const Earnings = () => {
     setCurrentPage(1);
   };
 
-<<<<<<< HEAD
   const filteredTotalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   const filteredStartIndex = (currentPage - 1) * itemsPerPage;
   const filteredEndIndex = filteredStartIndex + itemsPerPage;
   const currentTransactions = filteredTransactions.slice(filteredStartIndex, filteredEndIndex);
-=======
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
->>>>>>> 73a6a428f80c078010278cc3e3a827690313d2e8
 
   return (
     <div className="py-6">
