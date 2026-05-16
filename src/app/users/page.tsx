@@ -2,13 +2,14 @@
 
 import React from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Eye, Ban, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Search, Eye, Ban, ChevronLeft, ChevronRight, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import BlockedUsersModal from "./BlockedUsersModal";
 import UserDetailsModal from "./UserDetailsModal";
 import BlockUserModal from "../admins/BlockUserModal";
-import { useGetAllUserQuery, useUpdateUserMutation, useDeleteUserMutation } from "../../../redux/api/userApi";
+import { useGetAllUserQuery, useUpdateUserMutation, useDeleteUserMutation, useApproveUserMutation } from "../../../redux/api/userApi";
 import { imageUrl } from "../../../config/envConfig";
 
 
@@ -75,12 +76,16 @@ function UsersTable({
   users,
   onViewUser,
   onBlockUser,
+  onAcceptUser,
   startIndex,
+  showAccept,
 }: {
   users: any[];
   onViewUser: (user: any) => void;
   onBlockUser: (user: any) => void;
+  onAcceptUser: (user: any) => void;
   startIndex: number;
+  showAccept?: boolean;
 }) {
   return (
     <>
@@ -112,7 +117,7 @@ function UsersTable({
             </thead>
             <tbody className="divide-border divide-y">
               {users.map((u, idx) => (
-                <tr key={u.id} className="hover:bg-muted/30 transition-colors">
+                <tr key={u._id || u.id} className="hover:bg-muted/30 transition-colors">
                   <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
                     {startIndex + idx + 1}
                   </td>
@@ -146,6 +151,22 @@ function UsersTable({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
+                      {showAccept && !u.isApprovedByAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8"
+                          onClick={() => onAcceptUser(u)}
+                          title="Accept/Approve Provider"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {showAccept && u.isApprovedByAdmin && (
+                        <div className="flex h-8 w-8 items-center justify-center text-green-500" title="Approved">
+                          <CheckCircle className="h-4 w-4 fill-current" />
+                        </div>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -199,6 +220,22 @@ function UsersTable({
                 </div>
               </div>
               <div className="flex flex-shrink-0 gap-2">
+                {showAccept && !u.isApprovedByAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8"
+                    onClick={() => onAcceptUser(u)}
+                    title="Accept/Approve Provider"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                  </Button>
+                )}
+                {showAccept && u.isApprovedByAdmin && (
+                  <div className="flex h-8 w-8 items-center justify-center text-green-500" title="Approved">
+                    <CheckCircle className="h-4 w-4 fill-current" />
+                  </div>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -263,6 +300,7 @@ export default function UsersPage() {
 
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
+  const [approveUser] = useApproveUserMutation();
 
   // Safeguard: Filter data client-side as well in case the API returns mixed results
   const allUsers = apiResponse?.data || [];
@@ -312,6 +350,16 @@ export default function UsersPage() {
       setBlockedUsers((prev) => prev.filter((u) => u._id !== id));
     } catch (err) {
       console.error("Failed to delete user:", err);
+    }
+  }
+
+  async function handleAccept(user: any) {
+    try {
+      const res = await approveUser(user._id).unwrap();
+      toast.success(res.message || "User approved successfully");
+    } catch (err: any) {
+      console.error("Failed to approve user:", err);
+      toast.error(err?.data?.message || "Failed to approve provider");
     }
   }
 
@@ -377,7 +425,9 @@ export default function UsersPage() {
           users={users}
           onViewUser={setSelectedUser}
           onBlockUser={setBlockUser}
+          onAcceptUser={handleAccept}
           startIndex={startIndex}
+          showAccept={activeTab === "providers"}
         />
         {!isLoading && users.length === 0 && (
           <div className="text-muted-foreground border-border flex h-60 items-center justify-center border-x border-b bg-card">
