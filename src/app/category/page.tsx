@@ -1,288 +1,156 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Plus, Trash2, ChevronLeft, ChevronRight, Edit } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Eye, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import CreateCategoryModal from "./CreateCategoryModal";
-import EditCategoryModal from "./EditCategoryModal";
+import { useGetAllAddOnsQuery } from "../../../redux/api/categoryApi";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 
-// Inline DeleteCategoryModal
-function DeleteCategoryModal({
+function ViewAddonModal({
   open,
   onClose,
-  onConfirm,
-  categoryName,
+  addon,
 }: {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
-  categoryName?: string;
+  addon: any | null;
 }) {
+  if (!addon) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onClose} modal={false}>
-      <DialogContent className="bg-background sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Delete Category</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete the category{" "}
-            <span className="text-foreground font-medium">"{categoryName}"</span>? This action
-            cannot be undone.
-          </DialogDescription>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="bg-background sm:max-w-[500px]">
+        <DialogHeader className="border-b pb-4">
+          <DialogTitle className="text-xl font-bold">{addon.name}</DialogTitle>
         </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete
-          </Button>
-        </DialogFooter>
+        <div className="space-y-6 pt-4">
+          <div className="space-y-2">
+            <h4 className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Description</h4>
+            <p className="text-foreground leading-relaxed">{addon.description}</p>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <h4 className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Service Type</h4>
+              <span className="bg-secondary text-secondary-foreground inline-block rounded-full px-3 py-1 text-sm font-medium">
+                {addon.type}
+              </span>
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Status</h4>
+              <span className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${
+                addon.status === "active" 
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              }`}>
+                {addon.status}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6 border-t pt-4">
+            <div className="space-y-1">
+              <h4 className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Standard Price</h4>
+              <p className="text-2xl font-bold text-primary">${addon.standardPrice}</p>
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-muted-foreground text-sm font-medium uppercase tracking-wider">Founding Price</h4>
+              <p className="text-2xl font-bold text-primary">
+                {addon.foundingMemberPrice ? `$${addon.foundingMemberPrice}` : "N/A"}
+              </p>
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-// Seed data for categories
-const seedCategories = [
-  {
-    id: "1",
-    name: "Technology",
-    subCategories: ["Smartphones", "Laptops", "Accessories", "Software"],
-    createdAt: "2023-01-15",
-  },
-  {
-    id: "2",
-    name: "Lifestyle",
-    subCategories: ["Travel", "Food", "Health", "Fashion"],
-    createdAt: "2023-02-20",
-  },
-  {
-    id: "3",
-    name: "Education",
-    subCategories: ["Online Courses", "Books", "Tutorials"],
-    createdAt: "2023-03-10",
-  },
-  {
-    id: "4",
-    name: "Business",
-    subCategories: ["Marketing", "Finance", "Startups"],
-    createdAt: "2023-04-05",
-  },
-  {
-    id: "5",
-    name: "Entertainment",
-    subCategories: ["Movies", "Music", "Games", "Events"],
-    createdAt: "2023-05-12",
-  },
-];
-
-type Category = (typeof seedCategories)[0];
-
-function CategoryTable({
-  categories,
-  onDelete,
-  onEdit,
-  startIndex,
+function AddonCards({
+  addons,
+  onView,
 }: {
-  categories: Category[];
-  onDelete: (category: Category) => void;
-  onEdit: (category: Category) => void;
-  startIndex: number;
+  addons: any[];
+  onView: (addon: any) => void;
 }) {
   return (
-    <>
-      {/* Desktop Table View */}
-      <div className="bg-card border-border hidden overflow-hidden rounded-b-lg border shadow-sm md:block">
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-muted-foreground px-6 py-4 text-left text-xs font-medium tracking-wider uppercase">
-                  No
-                </th>
-                <th className="text-muted-foreground px-6 py-4 text-left text-xs font-medium tracking-wider uppercase">
-                  Category Name
-                </th>
-                <th className="text-muted-foreground px-6 py-4 text-left text-xs font-medium tracking-wider uppercase">
-                  Sub Categories
-                </th>
-                <th className="text-muted-foreground px-6 py-4 text-left text-xs font-medium tracking-wider uppercase">
-                  Created Date
-                </th>
-                <th className="text-muted-foreground px-6 py-4 text-left text-xs font-medium tracking-wider uppercase">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-border divide-y">
-              {categories.map((cat, idx) => (
-                <tr key={cat.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
-                    {startIndex + idx + 1}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-foreground text-sm font-medium">{cat.name}</span>
-                  </td>
-                  <td className="text-muted-foreground px-6 py-4 text-sm">
-                    <div className="flex flex-wrap gap-1">
-                      {cat.subCategories.slice(0, 3).map((sub, i) => (
-                        <span
-                          key={i}
-                          className="bg-secondary text-secondary-foreground rounded px-2 py-0.5 text-xs"
-                        >
-                          {sub}
-                        </span>
-                      ))}
-                      {cat.subCategories.length > 3 && (
-                        <span className="text-muted-foreground py-0.5 text-xs">
-                          +{cat.subCategories.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="text-muted-foreground px-6 py-4 text-sm whitespace-nowrap">
-                    {cat.createdAt}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8"
-                        onClick={() => onEdit(cat)}
-                        title="Edit Category"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
-                        onClick={() => onDelete(cat)}
-                        title="Delete Category"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Mobile/Tablet Card View */}
-      <div className="space-y-3 p-4 md:hidden">
-        {categories.map((cat, idx) => (
-          <div key={cat.id} className="bg-card border-border space-y-3 rounded-lg border p-4">
-            <div className="flex items-start justify-between">
-              <div className="min-w-0 flex-1">
-                <h3 className="text-foreground truncate font-semibold">{cat.name}</h3>
-                <p className="text-muted-foreground text-xs">#{startIndex + idx + 1}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-primary hover:text-primary hover:bg-primary/10 h-8 w-8"
-                  onClick={() => onEdit(cat)}
-                  title="Edit Category"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
-                  onClick={() => onDelete(cat)}
-                  title="Delete Category"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+    <div className="grid grid-cols-1 gap-6 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {addons.map((item) => (
+        <div 
+          key={item._id} 
+          className="bg-card group border-border hover:border-primary/50 relative flex flex-col justify-between overflow-hidden rounded-xl border shadow-sm transition-all hover:shadow-md"
+        >
+          <div className="p-5">
+            <div className="mb-4 flex items-start justify-between">
+              <span className="bg-primary/10 text-primary rounded-full px-2.5 py-0.5 text-xs font-semibold">
+                {item.type}
+              </span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                item.status === "active" 
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              }`}>
+                {item.status}
+              </span>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex flex-col gap-1">
-                <span className="text-muted-foreground">Sub Categories:</span>
-                <div className="flex flex-wrap gap-1">
-                  {cat.subCategories.map((sub, i) => (
-                    <span
-                      key={i}
-                      className="bg-secondary text-secondary-foreground rounded px-2 py-0.5 text-xs"
-                    >
-                      {sub}
-                    </span>
-                  ))}
-                </div>
+            
+            <h3 className="text-foreground mb-2 line-clamp-1 text-lg font-bold group-hover:text-primary transition-colors">
+              {item.name}
+            </h3>
+            <p className="text-muted-foreground mb-6 line-clamp-2 min-h-[40px] text-sm leading-relaxed">
+              {item.description}
+            </p>
+            
+            <div className="flex items-center justify-between border-t pt-4">
+              <div>
+                <p className="text-muted-foreground text-[10px] font-medium uppercase tracking-wider">Price</p>
+                <p className="text-xl font-bold text-primary">${item.standardPrice}</p>
               </div>
-              <div className="flex justify-between pt-2">
-                <span className="text-muted-foreground">Created:</span>
-                <span className="text-foreground">{cat.createdAt}</span>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hover:bg-primary hover:text-primary-foreground h-9 gap-2 border-primary/20"
+                onClick={() => onView(item)}
+              >
+                <Eye className="h-4 w-4" />
+                View
+              </Button>
             </div>
           </div>
-        ))}
-      </div>
-    </>
+        </div>
+      ))}
+    </div>
   );
 }
 
 export default function CategoryPage() {
-  const [categories, setCategories] = useState<Category[]>(seedCategories);
   const [query, setQuery] = useState("");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [deleteCategory, setDeleteCategory] = useState<Category | null>(null);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [viewingAddon, setViewingAddon] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
 
-  const filtered = categories.filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
+  // API connection
+  const { data: apiResponse, isLoading } = useGetAllAddOnsQuery({
+    page: currentPage,
+    limit: itemsPerPage,
+  });
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const allAddons = apiResponse?.data || [];
+  
+  const filteredAddons = allAddons.filter((item: any) =>
+    item.name.toLowerCase().includes(query.toLowerCase()) ||
+    item.type.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const meta = apiResponse?.meta || { total: allAddons.length, page: 1, limit: itemsPerPage };
+  const totalPages = Math.ceil((meta.total || filteredAddons.length) / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedCategories = filtered.slice(startIndex, endIndex);
-
-  const handleCreateCategory = (newCategory: { name: string; subCategories: string[] }) => {
-    const category: Category = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newCategory.name,
-      subCategories: newCategory.subCategories,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setCategories([category, ...categories]);
-    setIsCreateModalOpen(false);
-  };
-
-  const handleUpdateCategory = (updatedData: { name: string; subCategories: string[] }) => {
-    if (editingCategory) {
-      setCategories(
-        categories.map((c) => (c.id === editingCategory.id ? { ...c, ...updatedData } : c)),
-      );
-      setEditingCategory(null);
-    }
-  };
-
-  const handleEditCategory = (category: Category) => {
-    setEditingCategory(category);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (deleteCategory) {
-      setCategories(categories.filter((c) => c.id !== deleteCategory.id));
-      setDeleteCategory(null);
-    }
-  };
 
   return (
     <div className="bg-background min-h-screen">
@@ -290,37 +158,40 @@ export default function CategoryPage() {
       <div className="bg-primary text-primary-foreground rounded-t-lg p-4">
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold">Category List</h2>
+            <h2 className="text-lg font-semibold">Extra Service List</h2>
           </div>
           <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
             <div className="relative w-full sm:w-64">
               <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <Input
-                placeholder="Search Category"
+                placeholder="Search Service"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="bg-background text-foreground border-primary-foreground/20 w-full pl-9"
               />
             </div>
-            <Button
-              variant="secondary"
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 whitespace-nowrap"
-              onClick={() => setIsCreateModalOpen(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add Category
-            </Button>
           </div>
         </div>
       </div>
 
-      {/* Table area */}
-      <div>
-        <CategoryTable
-          categories={paginatedCategories}
-          onDelete={setDeleteCategory}
-          onEdit={handleEditCategory}
-          startIndex={startIndex}
-        />
+      {/* Cards area */}
+      <div className="relative min-h-[400px]">
+        {isLoading && (
+          <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[1px]">
+             <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          </div>
+        )}
+        
+        {!isLoading && filteredAddons.length > 0 ? (
+          <AddonCards
+            addons={filteredAddons}
+            onView={setViewingAddon}
+          />
+        ) : !isLoading ? (
+          <div className="text-muted-foreground border-border flex h-60 items-center justify-center border-x border-b bg-card">
+            No services found
+          </div>
+        ) : null}
       </div>
 
       {/* Pagination */}
@@ -328,8 +199,8 @@ export default function CategoryPage() {
         <div className="bg-card border-border rounded-b-lg border-t p-4">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="text-muted-foreground text-sm">
-              Showing {startIndex + 1} to {Math.min(endIndex, filtered.length)} of {filtered.length}{" "}
-              categories
+              Showing {startIndex + 1} to {Math.min(startIndex + filteredAddons.length, meta.total || filteredAddons.length)} of {meta.total || filteredAddons.length}{" "}
+              services
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -370,27 +241,11 @@ export default function CategoryPage() {
         </div>
       )}
 
-      {/* Create Category Modal */}
-      <CreateCategoryModal
-        open={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onConfirm={handleCreateCategory}
-      />
-
-      {/* Edit Category Modal */}
-      <EditCategoryModal
-        open={!!editingCategory}
-        onClose={() => setEditingCategory(null)}
-        onConfirm={handleUpdateCategory}
-        category={editingCategory}
-      />
-
-      {/* Delete Category Modal */}
-      <DeleteCategoryModal
-        open={!!deleteCategory}
-        onClose={() => setDeleteCategory(null)}
-        onConfirm={handleDeleteConfirm}
-        categoryName={deleteCategory?.name}
+      {/* View Details Modal */}
+      <ViewAddonModal
+        open={!!viewingAddon}
+        onClose={() => setViewingAddon(null)}
+        addon={viewingAddon}
       />
     </div>
   );

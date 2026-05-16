@@ -2,16 +2,16 @@ import { baseApi } from "./baseApi";
 
 const categoryApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAllCategory: builder.query({
+    getAllAddOns: builder.query({
       query: (arg) => {
         const page = arg?.page;
         return {
-          url: "category/get-category-dashboard",
+          url: "/addon/get-all-addons",
           method: "GET",
           params: page ? { page } : {},
         };
       },
-      providesTags: ["category"],
+      providesTags: ["addon"],
     }),
     // fetch all categories (no pagination)
     getAllCategoryList: builder.query({
@@ -50,6 +50,7 @@ const categoryApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useGetAllAddOnsQuery,
   useCreateCategoryMutation,
   useGetAllCategoryQuery,
   useGetAllCategoryListQuery,
