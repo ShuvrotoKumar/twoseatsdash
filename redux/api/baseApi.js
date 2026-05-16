@@ -35,5 +35,6 @@ export const baseApi = createApi({
     "notification",
     "NDA",
     "aboutUs",
+    "addon",
   ],
 });
