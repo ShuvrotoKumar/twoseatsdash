@@ -197,7 +197,7 @@ function UsersTable({
       {/* Mobile/Tablet Card View */}
       <div className="space-y-3 p-4 md:hidden">
         {users.map((u, idx) => (
-          <div key={u.id} className="bg-card border-border space-y-3 rounded-lg border p-4">
+          <div key={u._id || u.id} className="bg-card border-border space-y-3 rounded-lg border p-4">
             <div className="flex items-start justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <Avatar className="h-12 w-12 flex-shrink-0">
