@@ -129,13 +129,13 @@ const AppSidebar = () => {
       {/* sidebar header */}
       <SidebarHeader className="flex flex-col items-center py-4 md:py-6">
         <div className="flex w-full flex-col items-center gap-2 md:gap-3">
-          <div className="mt-3 flex h-28 w-28 items-center justify-center group-data-[collapsible=icon]:mt-0 group-data-[collapsible=icon]:h-14 group-data-[collapsible=icon]:w-14 md:mt-6 md:h-32 md:w-32">
+          <div className="mt-3 flex h-32 w-32 items-center justify-center group-data-[collapsible=icon]:mt-0 group-data-[collapsible=icon]:h-16 group-data-[collapsible=icon]:w-16 md:mt-6 md:h-40 md:w-40">
             <Image
               src="/logo.png"
               alt="Logo"
-              width={128}
-              height={128}
-              className="h-full w-full object-contain group-data-[collapsible=icon]:h-14 group-data-[collapsible=icon]:w-14"
+              width={200}
+              height={200}
+              className="h-full w-full object-contain group-data-[collapsible=icon]:h-16 group-data-[collapsible=icon]:w-16"
               unoptimized
               onError={(e) => {
                 console.error('Logo failed to load:', e);
